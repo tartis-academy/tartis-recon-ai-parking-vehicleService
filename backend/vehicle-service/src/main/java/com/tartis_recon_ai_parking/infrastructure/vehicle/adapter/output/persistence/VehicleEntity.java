@@ -25,6 +25,8 @@ public class VehicleEntity {
     private String color;
     private Integer numDoors;
     private Boolean hasSideCar;
+    
+    @Column(nullable = false)
     private Boolean active;
 
 
