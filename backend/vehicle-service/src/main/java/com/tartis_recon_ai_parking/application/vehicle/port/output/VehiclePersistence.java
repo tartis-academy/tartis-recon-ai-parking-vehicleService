@@ -9,8 +9,11 @@ import java.util.Optional;
 public interface VehiclePersistence {
 
     // Guarda o actualiza un vehiculo
-    Vehicle save(Vehicle vechicle);
+    Vehicle save(Vehicle vehicle);
 
     // Busca un vehiculo especifico segun su matricula
     Optional<Vehicle> findByPlate(String plate);
+
+    // Nuevo método para verificar si el vehículo existe
+    boolean existsByPlate(String plate);
 }
