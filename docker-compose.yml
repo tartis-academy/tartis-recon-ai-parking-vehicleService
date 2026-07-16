@@ -15,7 +15,6 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
       - "${PGADMIN_PORT:-5050}:80"
     volumes:
@@ -47,7 +46,8 @@ services:
     healthcheck:
       # SonarQube tarda ~1-2 min en arrancar (levanta un Elasticsearch dentro).
       # start_period evita que se marque unhealthy mientras arranca.
-      test: ["CMD-SHELL", "wget -qO- http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"' || exit 1"]
+      # La imagen trae curl, no wget.
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
