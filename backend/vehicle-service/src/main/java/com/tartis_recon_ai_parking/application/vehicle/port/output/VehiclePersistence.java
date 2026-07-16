@@ -16,7 +16,11 @@ public interface VehiclePersistence {
 
     // Nuevo método para verificar si el vehículo existe
     boolean existsByPlate(String plate);
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 5913ffe (implementacion endpoint PUT para actualizar vehiculo por ID)
     // Busca un vehiculo especifico segun su id
     Optional<Vehicle> findById(Long id);
 }
