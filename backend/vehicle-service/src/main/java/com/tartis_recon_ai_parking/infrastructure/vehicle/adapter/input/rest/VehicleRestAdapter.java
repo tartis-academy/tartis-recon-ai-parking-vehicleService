@@ -4,11 +4,11 @@ import java.util.UUID;
 
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
-import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
-import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
+import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
+import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase; // Import necesario
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.response.VehicleResponse;
