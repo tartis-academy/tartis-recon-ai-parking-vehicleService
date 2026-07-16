@@ -2,6 +2,7 @@ package com.tartis_recon_ai_parking.domain.vehicle;
 
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 
+
 public class Vehicle{
 
     private VehicleType type;
@@ -16,14 +17,24 @@ public class Vehicle{
     //Default constructor
     public Vehicle(){}
 
-    //Vehicle constructor
+    //Vehicle constructorno entiendo
     public Vehicle(VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSideCar, boolean active) throws InvalidVehicleException{
 
-            //#region Data check (Separate if-statements for legibility)
-                if(type != VehicleType.CAR && type != VehicleType.MOTORBIKE && type != VehicleType.CAR_PMR) throw new InvalidVehicleException("Invalid vehicle type.");
-                if(type != VehicleType.MOTORBIKE && hasSideCar) throw new InvalidVehicleException("Invalid vehicle data.");
-                if(type == null || brand == null || model == null || color == null || plate == null) throw new InvalidVehicleException("Null vehicle data");
+            //#region Data validation check (Separated if-statements for legibility and debugging)
+                if(type != VehicleType.MOTORBIKE && hasSideCar) throw new InvalidVehicleException("Cars do not have sidecar.");
+
+                //Cars can only have 2 or 4 doors.
+                //Bikes cannot have doors. 
+                if(numDoors < 0) throw new InvalidVehicleException("Number of doors cannot be a negative number.");
+                if(type != VehicleType.MOTORBIKE && !(numDoors == 2 || numDoors == 4)) throw new InvalidVehicleException("Incorrect number of doors for a car.");
+                if(type == VehicleType.MOTORBIKE && numDoors > 0) throw new InvalidVehicleException("Incorrect number of doors for a motorbike.");
+
+                if(type == null) throw new InvalidVehicleException("Vehicle type is null.");
+                if(brand == null) throw new InvalidVehicleException("Vehicle brand is null.");
+                if(model == null) throw new InvalidVehicleException("Vehicle model is null.");
+                if(color == null) throw new InvalidVehicleException("Vehicle color is null.");
+                if(plate == null) throw new InvalidVehicleException("Vehicle plate is null.");
             //#endregion
 
             //#region Attribute initialization
@@ -64,7 +75,7 @@ public class Vehicle{
             return numDoors;
         }
     
-        public boolean isHasSideCar() {
+        public boolean hasSideCar() {
             return hasSideCar;
         }
     
@@ -76,35 +87,35 @@ public class Vehicle{
     //#region Setters
         public void setType(VehicleType type) throws InvalidVehicleException {
             if (type == null) {
-                throw new InvalidVehicleException("Null vehicle data");
+                throw new InvalidVehicleException("Null vehicle type.");
             }
             this.type = type;
         }
     
         public void setPlate(String plate) throws InvalidVehicleException {
             if (plate == null) {
-                throw new InvalidVehicleException("Null vehicle data");
+                throw new InvalidVehicleException("Null vehicle plate.");
             }
             this.plate = plate;
         }
     
         public void setBrand(String brand) throws InvalidVehicleException {
             if (brand == null) {
-                throw new InvalidVehicleException("Null vehicle data");
+                throw new InvalidVehicleException("Null vehicle brand.");
             }
             this.brand = brand;
         }
     
         public void setModel(String model) throws InvalidVehicleException {
             if (model == null) {
-                throw new InvalidVehicleException("Null vehicle data");
+                throw new InvalidVehicleException("Null vehicle model.");
             }
             this.model = model;
         }
     
         public void setColor(String color) throws InvalidVehicleException {
             if (color == null) {
-                throw new InvalidVehicleException("Null vehicle data");
+                throw new InvalidVehicleException("Null vehicle color.");
             }
             this.color = color;
         }
@@ -113,9 +124,9 @@ public class Vehicle{
             this.numDoors = numDoors;
         }
     
-        public void setHasSideCar(boolean hasSideCar) throws InvalidVehicleException {
+        public void setSideCar(boolean hasSideCar) throws InvalidVehicleException {
             if (this.type != VehicleType.MOTORBIKE && hasSideCar) {
-                throw new InvalidVehicleException("Invalid vehicle data.");
+                throw new InvalidVehicleException("Cars cannot have sidecar.");
             }
             this.hasSideCar = hasSideCar;
         }
