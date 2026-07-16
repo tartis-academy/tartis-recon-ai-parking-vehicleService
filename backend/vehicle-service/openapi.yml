@@ -1,0 +1,393 @@
+openapi: 3.0.3
+info:
+  title: vehicle-service API
+  description: >
+    Manages the vehicle catalogue. Source of truth for the contract-first
+    workflow: DTOs, controllers and enums are derived from this file, never the
+    other way around.
+
+    Consumed by stay-service during check-in (via StayVehiclePort) to resolve a
+    plate and to enforce RN-11 (a deactivated vehicle cannot enter).
+  version: 1.0.0
+  contact:
+    name: TARTIS Recon-AI - Team Parking
+
+servers:
+  - url: /v1
+
+tags:
+  - name: vehicles
+    description: Vehicle catalogue (CRUD + logical deactivation)
+
+paths:
+  /vehicles:
+    get:
+      tags: [vehicles]
+      operationId: listVehicles
+      summary: Lists registered vehicles
+      parameters:
+        - name: active
+          in: query
+          required: false
+          description: Filters by activation state. Omitted = all vehicles.
+          schema:
+            type: boolean
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/VehicleType'
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Page of vehicles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehiclePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [vehicles]
+      operationId: registerVehicle
+      summary: Registers a new vehicle
+      description: >
+        The plate is unique across the catalogue. Domain validations (plate
+        format, type/numDoors coherence) live in the Vehicle domain entity, not
+        in the controller.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleRequest'
+      responses:
+        '201':
+          description: Vehicle registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: A vehicle with that plate already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /vehicles/{id}:
+    get:
+      tags: [vehicles]
+      operationId: getVehicle
+      summary: Retrieves a vehicle by its ID
+      parameters:
+        - $ref: '#/components/parameters/VehicleIdPath'
+      responses:
+        '200':
+          description: Vehicle detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponse'
+        '404':
+          $ref: '#/components/responses/VehicleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [vehicles]
+      operationId: updateVehicle
+      summary: Updates an existing vehicle
+      description: >
+        Full update of the editable data (brand, model, colour, numDoors, type).
+        The plate is immutable: to correct a plate, deactivate and register a new
+        vehicle. The activation state is NOT changed here, use
+        PATCH /vehicles/{id}/status.
+      parameters:
+        - $ref: '#/components/parameters/VehicleIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleUpdateRequest'
+      responses:
+        '200':
+          description: Vehicle updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/VehicleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /vehicles/plate/{plate}:
+    get:
+      tags: [vehicles]
+      operationId: getVehicleByPlate
+      summary: Retrieves a vehicle by its plate
+      description: >
+        Used by stay-service during check-in to check whether the vehicle already
+        exists. A 404 here drives auto-registration on the stay-service side.
+      parameters:
+        - $ref: '#/components/parameters/PlatePath'
+      responses:
+        '200':
+          description: Vehicle detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponse'
+        '404':
+          description: No vehicle registered with that plate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /vehicles/{id}/status:
+    patch:
+      tags: [vehicles]
+      operationId: changeVehicleStatus
+      summary: Activates or deactivates a vehicle (logical delete)
+      description: >
+        Logical delete (RN-11): a vehicle with active=false is denied entry by
+        stay-service at check-in. Vehicles are never physically deleted, their
+        history must survive.
+      parameters:
+        - $ref: '#/components/parameters/VehicleIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleStatusRequest'
+      responses:
+        '200':
+          description: State updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/VehicleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+
+    VehicleType:
+      type: string
+      description: Canonical enum from the domain model. Shared with stay-service.
+      enum: [CAR, CAR_PMR, MOTORBIKE]
+
+    VehicleRequest:
+      type: object
+      required: [plate, type]
+      properties:
+        plate:
+          $ref: '#/components/schemas/Plate'
+        type:
+          $ref: '#/components/schemas/VehicleType'
+        brand:
+          type: string
+          maxLength: 50
+          example: "Toyota"
+        model:
+          type: string
+          maxLength: 50
+          example: "Corolla"
+        color:
+          type: string
+          maxLength: 30
+          example: "Rojo"
+        numDoors:
+          type: integer
+          minimum: 0
+          maximum: 7
+          nullable: true
+          description: >
+            Not applicable to MOTORBIKE: must be null or absent for that type.
+            Domain validation, returns 400 if violated.
+          example: 5
+        active:
+          type: boolean
+          default: true
+          description: Defaults to true when omitted.
+
+    VehicleUpdateRequest:
+      type: object
+      required: [type]
+      description: The plate is immutable and therefore not accepted here.
+      properties:
+        type:
+          $ref: '#/components/schemas/VehicleType'
+        brand:
+          type: string
+          maxLength: 50
+        model:
+          type: string
+          maxLength: 50
+        color:
+          type: string
+          maxLength: 30
+        numDoors:
+          type: integer
+          minimum: 0
+          maximum: 7
+          nullable: true
+
+    VehicleStatusRequest:
+      type: object
+      required: [active]
+      properties:
+        active:
+          type: boolean
+          example: false
+
+    VehicleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        plate:
+          $ref: '#/components/schemas/Plate'
+        type:
+          $ref: '#/components/schemas/VehicleType'
+        brand:
+          type: string
+        model:
+          type: string
+        color:
+          type: string
+        numDoors:
+          type: integer
+          nullable: true
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    VehiclePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/VehicleResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    Plate:
+      type: string
+      description: >
+        Spanish plate, 4 digits + 3 letters. Uppercase, no separators.
+        NOTE: the strict format excludes vowels and Q/N, but the pattern is kept
+        permissive to accept the "1234ABC" example agreed in Endpoints.pdf.
+      pattern: '^[0-9]{4}[A-Z]{3}$'
+      minLength: 7
+      maxLength: 7
+      example: "1234ABC"
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          example: 409
+        error:
+          type: string
+          example: "CONFLICT"
+        message:
+          type: string
+          example: "A vehicle with plate 1234ABC already exists"
+        path:
+          type: string
+          example: "/v1/vehicles"
+
+  parameters:
+    VehicleIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    PlatePath:
+      name: plate
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Plate'
+
+  responses:
+    BadRequest:
+      description: Invalid request (field or domain validation)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    VehicleNotFound:
+      description: Vehicle not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
