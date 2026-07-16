@@ -34,4 +34,10 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
     public boolean existsByPlate(String plate) {
         return vehicleRepository.existsByPlate(plate);
     }
+
+    @Override
+    public Optional<Vehicle> findById(Long id) {
+        return vehicleRepository.findById(id)
+            .map(vehiclePersistenceMapper::toDomain);
+    }
 }

@@ -16,4 +16,7 @@ public interface VehiclePersistence {
 
     // Nuevo método para verificar si el vehículo existe
     boolean existsByPlate(String plate);
+    
+    // Busca un vehiculo especifico segun su id
+    Optional<Vehicle> findById(Long id);
 }
