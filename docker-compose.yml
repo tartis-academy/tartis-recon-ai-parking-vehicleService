@@ -1,36 +1,66 @@
-services:
-  postgres:
-    image: postgres:15.18-alpine
-    container_name: parking-postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports: 
-      "${POSTGRES_PORT:-5432}:5432"
-  volumes:
-      parking-postgres-data:/var/lib/postgresql/data
-healthcheck:
-  test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-  interval: 5s
-  timeout: 3s
-  retries: 5
+# Herramientas COMPARTIDAS entre microservicios (pgAdmin, SonarQube).
+# Las bases de datos NO viven aqui: cada microservicio gestiona la suya en su
+# propio docker-compose.yml (ver backend/vehicle-service/docker-compose.yml).
+#
+# La red parking-shared es externa y hay que crearla UNA VEZ antes de levantar:
+#   docker network create parking-shared
+# Es lo que permite que pgAdmin vea los Postgres de cada servicio aunque esten
+# en composes distintos.
 
+services:
   pgadmin:
     image: dpage/pgadmin4:9.16
     container_name: parking-pgadmin
+    restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
-      
-      "${PGADMIN_PORT:-5050}:80"
-  depends_on:
-    postgres:
-      condition: service_healthy
-  volumes:
-    parking-pgadmin-data:/var/lib/pgadmin
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - parking-pgadmin-data:/var/lib/pgadmin
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/misc/ping || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - parking-shared
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: parking-sonarqube
+    restart: unless-stopped
+    environment:
+      # Base de datos embebida (H2). Suficiente en local; SonarQube avisa de que
+      # es solo para evaluacion y no permite actualizar de version conservando
+      # los datos. Si algun dia hace falta persistencia real, hay que darle un
+      # Postgres propio via SONAR_JDBC_URL.
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    ports:
+      - "${SONARQUBE_PORT:-9000}:9000"
+    volumes:
+      - parking-sonarqube-data:/opt/sonarqube/data
+      - parking-sonarqube-logs:/opt/sonarqube/logs
+      - parking-sonarqube-extensions:/opt/sonarqube/extensions
+    healthcheck:
+      # SonarQube tarda ~1-2 min en arrancar (levanta un Elasticsearch dentro).
+      # start_period evita que se marque unhealthy mientras arranca.
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    networks:
+      - parking-shared
 
 volumes:
-  parking-postgres-data:
   parking-pgadmin-data:
+  parking-sonarqube-data:
+  parking-sonarqube-logs:
+  parking-sonarqube-extensions:
+
+networks:
+  parking-shared:
+    external: true
