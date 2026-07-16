@@ -17,7 +17,7 @@ public class Vehicle{
     //Default constructor
     public Vehicle(){}
 
-    //Vehicle constructorno entiendo
+    //Vehicle constructor
     public Vehicle(VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSideCar, boolean active) throws InvalidVehicleException{
 
