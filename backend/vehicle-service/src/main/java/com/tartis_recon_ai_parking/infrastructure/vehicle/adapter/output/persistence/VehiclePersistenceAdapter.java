@@ -4,6 +4,7 @@ import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersis
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
+import java.util.List;
 
 @Component
 public class VehiclePersistenceAdapter implements VehiclePersistence {
@@ -29,6 +30,12 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
                 .map(vehiclePersistenceMapper::toDomain);
     }
 
+    @Override
+    public Optional<Vehicle> findById(Long id) {
+        return vehicleRepository.findById(id)
+                .map(entity -> vehiclePersistenceMapper.toDomain(entity));
+    }
+
     // Implementación necesaria para satisfacer la interfaz
     @Override
     public boolean existsByPlate(String plate) {
@@ -36,8 +43,10 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
     }
 
     @Override
-    public Optional<Vehicle> findById(Long id) {
-        return vehicleRepository.findById(id)
-            .map(vehiclePersistenceMapper::toDomain);
+    public List<Vehicle> findAll() {
+        return vehicleRepository.findAll() //traemos la lista desd BD
+                .stream() //convertimos lista en un flujo (mapear uno a uno)
+                .map(vehiclePersistenceMapper::toDomain) //convertimos cada Entity a domain
+                .toList();  //agrupamos d nuevo en lista
     }
 }

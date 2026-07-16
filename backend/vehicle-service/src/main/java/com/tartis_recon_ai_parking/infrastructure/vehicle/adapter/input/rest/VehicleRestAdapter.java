@@ -1,11 +1,18 @@
 package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest;
 
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
+<<<<<<< HEAD
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
+=======
+import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase;
+import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
+import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException; // Import necesario
+>>>>>>> 5913ffe (implementacion endpoint PUT para actualizar vehiculo por ID)
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.response.VehicleResponse;
@@ -19,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -27,11 +35,13 @@ public class VehicleRestAdapter {
 
     private final CreateVehicleUseCase createVehicleUseCase;
     private final DeleteVehicleUseCase deleteVehicleUseCase;
+    private final UpdateVehicleUseCase updateVehicleUseCase;
     private final GetVehicleUseCase getVehicleUseCase;
     private final VehicleRestMapper mapper;
     
     public VehicleRestAdapter(CreateVehicleUseCase createVehicleUseCase,
                               DeleteVehicleUseCase deleteVehicleUseCase,
+                              UpdateVehicleUseCase updateVehicleUseCase,
                               GetVehicleUseCase getVehicleUseCase,
                               VehicleRestMapper mapper) {
         this.createVehicleUseCase = createVehicleUseCase;
@@ -44,7 +54,9 @@ public class VehicleRestAdapter {
     public ResponseEntity<VehicleResponse> getByPlate(@PathVariable String plate) throws VehicleNotFoundException {
         Vehicle vehicle = getVehicleUseCase.getByPlate(plate);
         return ResponseEntity.ok(mapper.toResponse(vehicle));
-    }
+        this.updateVehicleUseCase = updateVehicleUseCase;
+    
+
 
     @PostMapping
     public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody VehicleRequest request) {
@@ -80,5 +92,32 @@ public class VehicleRestAdapter {
     public ResponseEntity<Void> deactivateVehicle(@PathVariable Long id) throws VehicleNotFoundException {
         deleteVehicleUseCase.deactivate(id);
         return ResponseEntity.noContent().build();
+    } catch (VehicleNotFoundException e) {
+        return ResponseEntity.notFound().build();
+    }
+}
+    @PutMapping
+    public ResponseEntity<?> updateVehicle(@Valid @RequestBody VehicleRequest request) {
+        try {
+            Vehicle vehicleData = new Vehicle(
+                VehicleType.valueOf(request.type),
+                request.plate, 
+                request.brand,
+                request.model,
+                request.color,
+                request.numDoors,
+                request.hasSidecar,
+                request.active
+            );
+
+            // Asegúrate de que aquí empiece por 'u' minúscula:
+            Vehicle updatedVehicle = updateVehicleUseCase.execute(vehicleData);
+            return new ResponseEntity<>(updatedVehicle, HttpStatus.OK);
+
+        } catch (InvalidVehicleException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (VehicleNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
     }
 }
