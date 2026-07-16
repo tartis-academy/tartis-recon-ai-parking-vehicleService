@@ -3,15 +3,16 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.output.persis
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
 import jakarta.persistence.*;
 
+import java.util.UUID;
+
 // Representa la tabla "vehicles" en el sistema de base de datos relacional.
 @Entity
 @Table(name = "vehicles")
 public class VehicleEntity {
 
-    // clave primaria (PK)
+    // clave primaria (PK): generada por el dominio (Vehicle.uniqueId), no por la BD.
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long uniqueId;
+    private UUID uniqueId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -32,8 +33,8 @@ public class VehicleEntity {
 
     public VehicleEntity() {}
 
-    public Long getUniqueId() { return uniqueId; }
-    public void setUniqueId(Long uniqueId) { this.uniqueId = uniqueId; }
+    public UUID getUniqueId() { return uniqueId; }
+    public void setUniqueId(UUID uniqueId) { this.uniqueId = uniqueId; }
 
     public VehicleType getType() { return type; }
     public void setType(VehicleType type) { this.type = type; }

@@ -78,7 +78,7 @@ public class Vehicle{
         return numDoors;
     }
     
-    public boolean hasSideCar() {
+    public boolean getSideCar() {
         return hasSideCar;
     }
     
