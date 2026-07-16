@@ -1,10 +1,6 @@
-package com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
+package com.tartis_recon_ai_parking.domain.vehicle;
 
-import VehicleType;
-
-public enum VehicleType{
-    CAR, CAR_PMR, MOTORBIKE
-}
+import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 
 public class Vehicle{
 
@@ -22,11 +18,11 @@ public class Vehicle{
 
     //Vehicle constructor
     public Vehicle(VehicleType type, String plate, String brand, String model, String color,
-        int numDoors, boolean hasSideCar, boolean active){
+        int numDoors, boolean hasSideCar, boolean active) throws InvalidVehicleException{
 
             //#region Data check (Separate if-statements for legibility)
-                if(type < CAR || type > MOTORBIKE) throw new InvalidVehicleException("Invalid vehicle type.");
-                if(type != MOTORBIKE && hasSideCar) throw new InvalidVehicleException("Invalid vehicle data.");
+                if(type != VehicleType.CAR && type != VehicleType.MOTORBIKE && type != VehicleType.CAR_PMR) throw new InvalidVehicleException("Invalid vehicle type.");
+                if(type != VehicleType.MOTORBIKE && hasSideCar) throw new InvalidVehicleException("Invalid vehicle data.");
                 if(type == null || brand == null || model == null || color == null || plate == null) throw new InvalidVehicleException("Null vehicle data");
             //#endregion
 
@@ -78,35 +74,35 @@ public class Vehicle{
     //#endregion
 
     //#region Setters
-        public void setType(VehicleType type) {
+        public void setType(VehicleType type) throws InvalidVehicleException {
             if (type == null) {
                 throw new InvalidVehicleException("Null vehicle data");
             }
             this.type = type;
         }
     
-        public void setPlate(String plate) {
+        public void setPlate(String plate) throws InvalidVehicleException {
             if (plate == null) {
                 throw new InvalidVehicleException("Null vehicle data");
             }
             this.plate = plate;
         }
     
-        public void setBrand(String brand) {
+        public void setBrand(String brand) throws InvalidVehicleException {
             if (brand == null) {
                 throw new InvalidVehicleException("Null vehicle data");
             }
             this.brand = brand;
         }
     
-        public void setModel(String model) {
+        public void setModel(String model) throws InvalidVehicleException {
             if (model == null) {
                 throw new InvalidVehicleException("Null vehicle data");
             }
             this.model = model;
         }
     
-        public void setColor(String color) {
+        public void setColor(String color) throws InvalidVehicleException {
             if (color == null) {
                 throw new InvalidVehicleException("Null vehicle data");
             }
@@ -117,7 +113,7 @@ public class Vehicle{
             this.numDoors = numDoors;
         }
     
-        public void setHasSideCar(boolean hasSideCar) {
+        public void setHasSideCar(boolean hasSideCar) throws InvalidVehicleException {
             if (this.type != VehicleType.MOTORBIKE && hasSideCar) {
                 throw new InvalidVehicleException("Invalid vehicle data.");
             }
