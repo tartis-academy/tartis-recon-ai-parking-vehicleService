@@ -12,7 +12,8 @@ public class CreateVehicleUseCase {
         this.vehiclePersistence = vehiclePersistence;
     }
 
-    public Vehicle execute(Vehicle vehicle) {
+    // He añadido "throws InvalidVehicleException" aquí
+    public Vehicle execute(Vehicle vehicle) throws InvalidVehicleException {
         if (vehiclePersistence.existsByPlate(vehicle.getPlate())) {
             throw new InvalidVehicleException("Ya existe un vehículo con la matrícula: " + vehicle.getPlate());
         }
