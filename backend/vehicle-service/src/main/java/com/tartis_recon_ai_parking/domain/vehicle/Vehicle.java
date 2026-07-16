@@ -5,6 +5,9 @@ import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleExcept
 
 public class Vehicle{
 
+    private static Long nextId = 1L;
+    private Long uniqueId = nextId++;
+
     private VehicleType type;
     private String plate;
     private String brand;
@@ -51,6 +54,10 @@ public class Vehicle{
 
 
     //#region Getters
+        public Long getUniqueId(){
+            return uniqueId;
+        }
+
         public VehicleType getType() {
             return type;
         }
@@ -85,6 +92,10 @@ public class Vehicle{
     //#endregion
 
     //#region Setters
+        public void setUniqueId(Long uniqueId){
+            this.uniqueId = uniqueId;
+        }
+
         public void setType(VehicleType type) throws InvalidVehicleException {
             if (type == null) {
                 throw new InvalidVehicleException("Null vehicle type.");
