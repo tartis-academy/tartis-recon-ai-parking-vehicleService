@@ -4,9 +4,8 @@ import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersis
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
-import org.springframework.stereotype.Service;
 
-@Service
+
 public class UpdateVehicleUseCase {
 
     private final VehiclePersistence vehiclePersistence;
@@ -27,7 +26,7 @@ public class UpdateVehicleUseCase {
         existingVehicle.setModel(updatedData.getModel());
         existingVehicle.setColor(updatedData.getColor());
         existingVehicle.setNumDoors(updatedData.getNumDoors());
-        existingVehicle.setSideCar(updatedData.hasSideCar());
+        existingVehicle.setSideCar(updatedData.getSideCar());
         existingVehicle.setActive(updatedData.isActive());
 
         // 3. Guardamos los cambios
