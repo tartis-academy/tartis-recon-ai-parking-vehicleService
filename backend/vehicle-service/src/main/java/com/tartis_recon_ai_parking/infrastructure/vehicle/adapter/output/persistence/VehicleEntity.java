@@ -2,11 +2,12 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.output.persis
 
 import jakarta.persistence.*;
 
+// Representa la tabla "vehicles" en el sistema de base de datos relacional.
 @Entity
 @Table(name = "vehicles")
 public class VehicleEntity {
 
-
+    // clave primaria (PK)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long uniqueId;

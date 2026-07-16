@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+// Adaptador de Persistencia (Driven Adapter) para la entidad Vehicle que implementa 
+// el puerto de salida e inyecta tanto el repositorio como el mapper.
+// Su función principal es orquestar la conversión y el guardado.
 @Component
 public class VehiclePersistenceAdapter implements VehiclePersistence {
 
@@ -17,6 +20,7 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
         this.mapper = mapper;
     }
 
+    // Traduce la entidad, la guarda en la base de datos y devuelve el modelo de dominio actualizado.
     @Override
     public Vehicle save(Vehicle vehicle) {
         VehicleEntity entity = mapper.toEntity(vehicle);
@@ -24,6 +28,7 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
         return mapper.toDomain(savedEntity);
     }
 
+    // Busca en la base de datos por matrícula y mapea el resultado a dominio si existe.
     @Override
     public Optional<Vehicle> findByPlate(String plate) {
 
