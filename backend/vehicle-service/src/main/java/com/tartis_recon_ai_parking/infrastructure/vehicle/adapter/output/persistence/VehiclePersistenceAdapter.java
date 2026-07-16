@@ -29,6 +29,12 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
                 .map(vehiclePersistenceMapper::toDomain);
     }
 
+    @Override
+    public Optional<Vehicle> findById(Long id) {
+        return vehicleRepository.findById(id)
+                .map(entity -> vehiclePersistenceMapper.toDomain(entity));
+    }
+
     // Implementación necesaria para satisfacer la interfaz
     @Override
     public boolean existsByPlate(String plate) {
