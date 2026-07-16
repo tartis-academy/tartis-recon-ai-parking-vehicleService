@@ -1,17 +1,11 @@
 package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest;
 
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
-<<<<<<< HEAD
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
-=======
-import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase;
-import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
-import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
-import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException; // Import necesario
->>>>>>> 5913ffe (implementacion endpoint PUT para actualizar vehiculo por ID)
+import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase; // Import necesario
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
 import jakarta.validation.Valid;
@@ -40,7 +34,7 @@ public class VehicleRestAdapter {
         this.deleteVehicleUseCase = deleteVehicleUseCase;
         this.updateVehicleUseCase = updateVehicleUseCase;
     
-
+                              }
 
     @PostMapping
     public ResponseEntity<?> createVehicle(@Valid @RequestBody VehicleRequest request) {
