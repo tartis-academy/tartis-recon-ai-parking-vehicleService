@@ -13,7 +13,7 @@ public class Vehicle{
     private String model;
     private String color;
     private int numDoors;
-    private boolean hasSideCar;
+    private boolean hasSidecar;
     private boolean active;
 
     //Default constructor
@@ -21,10 +21,10 @@ public class Vehicle{
 
     //Vehicle constructor
     public Vehicle(VehicleType type, String plate, String brand, String model, String color,
-        int numDoors, boolean hasSideCar, boolean active) throws InvalidVehicleException{
+        int numDoors, boolean hasSidecar, boolean active) throws InvalidVehicleException{
 
             if(type == null) throw new InvalidVehicleException("Vehicle type is null.");
-            if(type != VehicleType.MOTORBIKE && hasSideCar) throw new InvalidVehicleException("Cars do not have sidecar.");
+            if(type != VehicleType.MOTORBIKE && hasSidecar) throw new InvalidVehicleException("Cars do not have sidecar.");
 
             //Cars can only have 2 or 4 doors.
             //Bikes cannot have doors. 
@@ -43,7 +43,7 @@ public class Vehicle{
             this.model = model;
             this.color = color;
             this.numDoors = numDoors;
-            this.hasSideCar = hasSideCar;
+            this.hasSidecar = hasSidecar;
             this.active = active;
  
     }
@@ -78,8 +78,8 @@ public class Vehicle{
         return numDoors;
     }
     
-    public boolean getSideCar() {
-        return hasSideCar;
+    public boolean getHasSidecar() {
+        return hasSidecar;
     }
     
     public boolean isActive() {
@@ -130,11 +130,11 @@ public class Vehicle{
         this.numDoors = numDoors;
     }
     
-    public void setSideCar(boolean hasSideCar) throws InvalidVehicleException {
-        if (this.type != VehicleType.MOTORBIKE && hasSideCar) {
+    public void setHasSidecar(boolean hasSidecar) throws InvalidVehicleException {
+        if (this.type != VehicleType.MOTORBIKE && hasSidecar) {
             throw new InvalidVehicleException("Cars cannot have sidecar.");
         }
-        this.hasSideCar = hasSideCar;
+        this.hasSidecar = hasSidecar;
     }
     
     public void setActive(boolean active) {

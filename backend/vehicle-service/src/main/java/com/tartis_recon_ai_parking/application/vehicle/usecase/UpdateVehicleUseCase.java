@@ -26,7 +26,7 @@ public class UpdateVehicleUseCase {
         existingVehicle.setModel(updatedData.getModel());
         existingVehicle.setColor(updatedData.getColor());
         existingVehicle.setNumDoors(updatedData.getNumDoors());
-        existingVehicle.setSideCar(updatedData.getSideCar());
+        existingVehicle.setHasSidecar(updatedData.getHasSidecar());
         existingVehicle.setActive(updatedData.isActive());
 
         // 3. Guardamos los cambios

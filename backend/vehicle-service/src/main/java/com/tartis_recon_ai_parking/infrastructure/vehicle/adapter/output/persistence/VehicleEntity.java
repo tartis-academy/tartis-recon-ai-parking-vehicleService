@@ -25,7 +25,7 @@ public class VehicleEntity {
     private String model;
     private String color;
     private Integer numDoors;
-    private Boolean hasSideCar;
+    private Boolean hasSidecar;
     
     @Column(nullable = false)
     private Boolean active;
@@ -54,8 +54,8 @@ public class VehicleEntity {
     public Integer getNumDoors() { return numDoors; }
     public void setNumDoors(Integer numDoors) { this.numDoors = numDoors; }
 
-    public Boolean getHasSideCar() { return hasSideCar; }
-    public void setHasSideCar(Boolean hasSideCar) { this.hasSideCar = hasSideCar; }
+    public Boolean getHasSidecar() { return hasSidecar; }
+    public void setHasSidecar(Boolean hasSidecar) { this.hasSidecar = hasSidecar; }
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }

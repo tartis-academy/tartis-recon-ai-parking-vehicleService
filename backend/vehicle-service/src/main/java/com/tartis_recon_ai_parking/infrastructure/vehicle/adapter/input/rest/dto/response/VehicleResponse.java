@@ -22,6 +22,6 @@ public class VehicleResponse {
     private String model;
     private String color;
     private Integer numDoors;
-    private Boolean hasSideCar;
+    private Boolean hasSidecar;
     private Boolean active;
 }
