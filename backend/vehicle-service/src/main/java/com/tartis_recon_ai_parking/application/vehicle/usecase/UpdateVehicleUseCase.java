@@ -33,7 +33,18 @@ public class UpdateVehicleUseCase {
         Vehicle existingVehicle = vehiclePersistence.findById(id)
                 .orElseThrow(() -> new VehicleNotFoundException("Vehicle not found with ID: " + id));
 
-        // 3. Modificamos los atributos a traves de los setters con validacion.
+        // 3. La matricula es unique en BD. Sin esta comprobacion el choque lo
+        //    detecta Postgres al hacer flush y sale como 500; aqui sale como 400.
+        //    El filter es imprescindible: si el vehiculo conserva su propia
+        //    matricula la encontramos a el mismo, y eso no es un duplicado.
+        vehiclePersistence.findByPlate(newData.getPlate())
+                .filter(other -> !other.getUniqueId().equals(id))
+                .ifPresent(other -> {
+                    throw new InvalidVehicleException(
+                            "Ya existe un vehículo con la matrícula: " + newData.getPlate());
+                });
+
+        // 4. Modificamos los atributos a traves de los setters con validacion.
         //    setType va primero: setHasSidecar valida contra el tipo ya asignado.
         existingVehicle.setType(newData.getType());
         existingVehicle.setPlate(newData.getPlate());
@@ -44,7 +55,7 @@ public class UpdateVehicleUseCase {
         existingVehicle.setHasSidecar(newData.getHasSidecar());
         existingVehicle.setActive(newData.isActive());
 
-        // 4. Guardamos los cambios.
+        // 5. Guardamos los cambios.
         return VehicleDTOFactory.toDTO(vehiclePersistence.save(existingVehicle));
     }
 }
