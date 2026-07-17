@@ -6,11 +6,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+// assertThat y assertThatThrownBy: Son metodos estaticos de AssertJ que permiten escribir 
+// comprobaciones fluidas, faciles de leer y autoexplicativas sobre los resultados.
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VehicleTest {
 
+    // @Test: Indica a JUnit que este metodo es una prueba unitaria individual que debe ejecutarse.
     @Test
     @DisplayName("Debe crear un coche valido (CAR) con puertas permitidas (2, 4, 5) y sin sidecar")
     void shouldCreateValidCar() throws InvalidVehicleException {
@@ -22,6 +25,8 @@ class VehicleTest {
         // QUE DEBERIA HACER:
         // Debe construirse con exito y comprobar mediante aserciones que los getters 
         // retornan exactamente los mismos valores con los que fue inicializado.
+        
+        // assertThat: Compara el valor real (obtenido del getter) con el valor esperado usando isEqualTo.
         assertThat(vehicle.getType()).isEqualTo(VehicleType.CAR);
         assertThat(vehicle.getPlate()).isEqualTo("1234ABC");
         assertThat(vehicle.getNumDoors()).isEqualTo(5);
@@ -53,11 +58,19 @@ class VehicleTest {
         // QUE DEBERIA HACER:
         // Debe fallar y lanzar InvalidVehicleException, ya que las reglas de negocio de dominio 
         // prohiben que los coches tengan sidecar. El mensaje de la excepcion debe indicar esto.
+        
+        // assertThatThrownBy: Captura la excepcion que lance la expresion lambda.
+        // isInstanceOf: Valida que la excepcion capturada sea exactamente de la clase indicada.
+        // hasMessageContaining: Valida que el mensaje de error de la excepcion tenga ese fragmento de texto.
         assertThatThrownBy(() -> new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, true, true))
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Cars do not have sidecar");
     }
 
+    // @ParameterizedTest: Indica a JUnit que esta prueba se ejecutara varias veces usando
+    // diferentes entradas (parametros) suministradas por un proveedor de datos.
+    // @ValueSource: Proveedor de datos que pasa una lista de valores simples (en este caso enteros)
+    // uno por uno en cada ejecucion de la prueba.
     @ParameterizedTest
     @ValueSource(ints = { 1, 3, 6 })
     @DisplayName("Debe lanzar InvalidVehicleException si un coche no tiene 2, 4 o 5 puertas")
