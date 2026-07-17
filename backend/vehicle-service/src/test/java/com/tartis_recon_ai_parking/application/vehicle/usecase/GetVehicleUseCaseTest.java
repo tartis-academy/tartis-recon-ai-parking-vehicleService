@@ -1,5 +1,6 @@
 package com.tartis_recon_ai_parking.application.vehicle.usecase;
 
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class GetVehicleUseCaseTest {
 
-    // @Mock: Crea un objeto de imitacion de la interfaz. Por defecto, sus metodos devuelven valores vacios 
+    // @Mock: Crea un objeto de imitacion de la interfaz. Por defecto, sus metodos devuelven valores vacios
     // (null, false, 0, Optional.empty()), a menos que se configure su comportamiento con when().
     @Mock
     private VehiclePersistence vehiclePersistence;
@@ -38,20 +39,20 @@ class GetVehicleUseCaseTest {
     @DisplayName("Debe devolver el vehiculo buscado por matricula si existe")
     void shouldGetVehicleByPlate() throws InvalidVehicleException, VehicleNotFoundException {
         // QUE HACE:
-        // 1. Crea un vehiculo de dominio valido.
+        // 1. Crea un vehiculo de dominio valido, que es lo que devuelve la persistencia.
         // 2. Configura el mock para que, al buscar por matricula "1234ABC", retorne el vehiculo envuelto en un Optional.
         // 3. Llama al metodo 'getByPlate' en el caso de uso.
         Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        
+
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findByPlate("1234ABC")).thenReturn(Optional.of(vehicle));
 
-        Vehicle result = getVehicleUseCase.getByPlate("1234ABC");
+        VehicleDTO result = getVehicleUseCase.getByPlate("1234ABC");
 
         // QUE DEBERIA HACER:
-        // Debe retornar el vehiculo correcto sin lanzar excepciones, y con los datos correctos.
+        // Debe retornar el DTO de salida correcto sin lanzar excepciones, y con los datos correctos.
         assertThat(result).isNotNull();
-        assertThat(result.getPlate()).isEqualTo("1234ABC");
+        assertThat(result.plate()).isEqualTo("1234ABC");
     }
 
     @Test
@@ -60,7 +61,7 @@ class GetVehicleUseCaseTest {
         // QUE HACE:
         // 1. Configura el mock para retornar Optional.empty() cuando se busque la matricula "UNKNOWN".
         // 2. Llama al metodo 'getByPlate' del caso de uso.
-        
+
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findByPlate("UNKNOWN")).thenReturn(Optional.empty());
 
@@ -81,16 +82,16 @@ class GetVehicleUseCaseTest {
         UUID id = UUID.randomUUID();
         Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
         vehicle.setUniqueId(id);
-        
+
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
 
-        Vehicle result = getVehicleUseCase.getById(id);
+        VehicleDTO result = getVehicleUseCase.getById(id);
 
         // QUE DEBERIA HACER:
-        // Debe retornar el vehiculo correctamente verificado por su identificador unico.
+        // Debe retornar el DTO correctamente verificado por su identificador unico.
         assertThat(result).isNotNull();
-        assertThat(result.getUniqueId()).isEqualTo(id);
+        assertThat(result.uniqueId()).isEqualTo(id);
     }
 
     @Test
@@ -101,7 +102,7 @@ class GetVehicleUseCaseTest {
         // 2. Configura el mock para retornar Optional.empty() cuando se busque por ese ID.
         // 3. Llama al metodo 'getById' del caso de uso.
         UUID id = UUID.randomUUID();
-        
+
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.empty());
 
@@ -116,20 +117,26 @@ class GetVehicleUseCaseTest {
     @DisplayName("Debe listar todos los vehiculos")
     void shouldListAllVehicles() throws InvalidVehicleException {
         // QUE HACE:
-        // 1. Crea dos vehiculos diferentes.
+        // 1. Crea dos vehiculos de dominio diferentes.
         // 2. Configura el mock para retornar una lista que contenga ambos vehiculos cuando se llame a findAll().
         // 3. Llama al metodo 'execute' del caso de uso.
         Vehicle vehicle1 = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
         Vehicle vehicle2 = new Vehicle(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, false, true);
-        
+
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findAll()).thenReturn(List.of(vehicle1, vehicle2));
 
-        List<Vehicle> result = getVehicleUseCase.execute();
+        List<VehicleDTO> result = getVehicleUseCase.execute();
 
         // QUE DEBERIA HACER:
-        // Debe retornar la lista completa conteniendo exactamente los vehiculos que el mock simulo.
+        // Debe retornar la lista completa traducida a DTOs, en el mismo orden y con los datos
+        // de los vehiculos que el mock simulo.
         assertThat(result).hasSize(2);
-        assertThat(result).containsExactly(vehicle1, vehicle2);
+        assertThat(result)
+                .extracting(VehicleDTO::plate)
+                .containsExactly("1234ABC", "5678DEF");
+        assertThat(result)
+                .extracting(VehicleDTO::type)
+                .containsExactly("CAR", "MOTORBIKE");
     }
 }

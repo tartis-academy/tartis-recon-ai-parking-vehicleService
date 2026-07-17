@@ -1,7 +1,8 @@
 package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest;
 
-import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
-import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleCreateDTO;
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
+import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.response.VehicleResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,23 +19,23 @@ class VehicleRestMapperTest {
     private final VehicleRestMapper mapper = Mappers.getMapper(VehicleRestMapper.class);
 
     @Test
-    @DisplayName("Debe mapear un objeto de dominio Vehicle a un DTO VehicleResponse de forma correcta")
-    void shouldMapVehicleToVehicleResponse() {
+    @DisplayName("Debe mapear un VehicleDTO de aplicacion a un DTO VehicleResponse de forma correcta")
+    void shouldMapVehicleDTOToVehicleResponse() {
         // QUE HACE:
-        // - Instancia un objeto Vehicle de dominio completo y valido con datos especificos.
+        // - Instancia un VehicleDTO completo y valido con datos especificos. El mapper ya no
+        //   conoce el dominio: traduce entre los DTO de aplicacion y el contrato HTTP.
         // - Llama al metodo toResponse del mapeador.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle.setUniqueId(id);
+        VehicleDTO vehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         VehicleResponse response = mapper.toResponse(vehicle);
 
         // QUE DEBERIA HACER:
-        // Debe retornar un objeto VehicleResponse no nulo y comprobar mediante aserciones 
+        // Debe retornar un objeto VehicleResponse no nulo y comprobar mediante aserciones
         // de AssertJ que cada campo del DTO resultante coincida exactamente con el de origen.
         assertThat(response).isNotNull();
         assertThat(response.getUniqueId()).isEqualTo(id);
-        assertThat(response.getType()).isEqualTo(VehicleType.CAR);
+        assertThat(response.getType()).isEqualTo("CAR");
         assertThat(response.getPlate()).isEqualTo("1234ABC");
         assertThat(response.getBrand()).isEqualTo("Toyota");
         assertThat(response.getModel()).isEqualTo("Corolla");
@@ -45,6 +46,38 @@ class VehicleRestMapperTest {
     }
 
     @Test
+    @DisplayName("Debe mapear un VehicleRequest entrante a un VehicleCreateDTO de aplicacion")
+    void shouldMapVehicleRequestToCreateDTO() {
+        // QUE HACE:
+        // - Instancia el request HTTP tal y como lo deserializa Spring.
+        // - Llama al metodo toCreateDTO del mapeador.
+        VehicleRequest request = new VehicleRequest();
+        request.type = "CAR";
+        request.plate = "1234ABC";
+        request.brand = "Toyota";
+        request.model = "Corolla";
+        request.color = "Red";
+        request.numDoors = 4;
+        request.hasSidecar = false;
+        request.active = true;
+
+        VehicleCreateDTO createDTO = mapper.toCreateDTO(request);
+
+        // QUE DEBERIA HACER:
+        // Debe trasladar todos los campos al DTO de entrada de la capa de aplicacion sin
+        // interpretarlos: validarlos es responsabilidad del dominio, no del mapper.
+        assertThat(createDTO).isNotNull();
+        assertThat(createDTO.type()).isEqualTo("CAR");
+        assertThat(createDTO.plate()).isEqualTo("1234ABC");
+        assertThat(createDTO.brand()).isEqualTo("Toyota");
+        assertThat(createDTO.model()).isEqualTo("Corolla");
+        assertThat(createDTO.color()).isEqualTo("Red");
+        assertThat(createDTO.numDoors()).isEqualTo(4);
+        assertThat(createDTO.hasSidecar()).isFalse();
+        assertThat(createDTO.active()).isTrue();
+    }
+
+    @Test
     @DisplayName("Debe retornar null al mapear un vehiculo nulo")
     void shouldReturnNullWhenMappingNullVehicle() {
         // QUE HACE:
@@ -52,25 +85,23 @@ class VehicleRestMapperTest {
         VehicleResponse response = mapper.toResponse(null);
 
         // QUE DEBERIA HACER:
-        // El mapper debe manejar el parametro nulo de forma segura devolviendo null 
+        // El mapper debe manejar el parametro nulo de forma segura devolviendo null
         // sin lanzar un NullPointerException.
         assertThat(response).isNull();
     }
 
     @Test
-    @DisplayName("Debe mapear una lista de vehiculos de dominio a una lista de DTOs correctamente")
+    @DisplayName("Debe mapear una lista de VehicleDTO a una lista de DTOs de respuesta correctamente")
     void shouldMapVehicleListToResponseList() {
         // QUE HACE:
-        // Instancia dos vehiculos de dominio en una lista, llama al metodo toResponseList del mapeador.
+        // Instancia dos VehicleDTO en una lista, llama al metodo toResponseList del mapeador.
         UUID id1 = UUID.randomUUID();
-        Vehicle vehicle1 = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle1.setUniqueId(id1);
+        VehicleDTO vehicle1 = new VehicleDTO(id1, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         UUID id2 = UUID.randomUUID();
-        Vehicle vehicle2 = new Vehicle(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, true, true);
-        vehicle2.setUniqueId(id2);
+        VehicleDTO vehicle2 = new VehicleDTO(id2, "MOTORBIKE", "5678DEF", "Honda", "CBR", "Black", 0, true, true);
 
-        List<Vehicle> vehicleList = List.of(vehicle1, vehicle2);
+        List<VehicleDTO> vehicleList = List.of(vehicle1, vehicle2);
 
         Iterable<VehicleResponse> responseList = mapper.toResponseList(vehicleList);
 

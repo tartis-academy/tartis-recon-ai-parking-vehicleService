@@ -1,12 +1,13 @@
 package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest;
 
 import tools.jackson.databind.ObjectMapper;
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleCreateDTO;
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase;
-import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
-import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.response.VehicleResponse;
@@ -28,6 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 // @WebMvcTest: Se enfoca unicamente en la capa web (Spring MVC) e inicializa MockMvc.
 // Solo carga VehicleRestAdapter en el contexto para hacer pruebas unitarias rapidas y aisladas de endpoints.
+//
+// Tras el refactor a DTOs el adaptador ya no construye objetos de dominio: pide al mapper
+// un VehicleCreateDTO y se lo entrega al caso de uso, que le devuelve un VehicleDTO. Por eso
+// aqui todo se simula con DTOs y no con Vehicle.
 @WebMvcTest(VehicleRestAdapter.class)
 class VehicleRestAdapterTest {
 
@@ -61,26 +66,24 @@ class VehicleRestAdapterTest {
     @DisplayName("Debe obtener la lista de todos los vehiculos correctamente con estado 200 OK")
     void shouldGetAllVehiclesSuccessfully() throws Exception {
         // QUE HACE:
-        // - Instancia dos vehiculos de prueba en una lista.
+        // - Simula dos VehicleDTO devueltos por el caso de uso.
         // - Simula dos DTOs de respuesta correspondientes.
         // - Configura el mock del caso de uso getVehicleUseCase para retornar la lista.
-        // - Configura el mapper para que convierta la lista de dominio a DTOs.
+        // - Configura el mapper para que convierta la lista de DTOs a respuestas.
         // - Realiza una peticion GET a /v1/vehicles.
         UUID id1 = UUID.randomUUID();
         UUID id2 = UUID.randomUUID();
-        Vehicle vehicle1 = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle1.setUniqueId(id1);
-        Vehicle vehicle2 = new Vehicle(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, true, true);
-        vehicle2.setUniqueId(id2);
+        VehicleDTO vehicle1 = new VehicleDTO(id1, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleDTO vehicle2 = new VehicleDTO(id2, "MOTORBIKE", "5678DEF", "Honda", "CBR", "Black", 0, true, true);
 
-        List<Vehicle> domainList = List.of(vehicle1, vehicle2);
+        List<VehicleDTO> dtoList = List.of(vehicle1, vehicle2);
 
-        VehicleResponse res1 = new VehicleResponse(id1, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        VehicleResponse res2 = new VehicleResponse(id2, VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, true, true);
+        VehicleResponse res1 = new VehicleResponse(id1, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse res2 = new VehicleResponse(id2, "MOTORBIKE", "5678DEF", "Honda", "CBR", "Black", 0, true, true);
         List<VehicleResponse> responseList = List.of(res1, res2);
 
-        when(getVehicleUseCase.execute()).thenReturn(domainList);
-        when(vehicleRestMapper.toResponseList(domainList)).thenReturn(responseList);
+        when(getVehicleUseCase.execute()).thenReturn(dtoList);
+        when(vehicleRestMapper.toResponseList(dtoList)).thenReturn(responseList);
 
         // QUE DEBERIA HACER:
         // Debe retornar estado 200 OK con la representacion JSON de la lista de vehiculos
@@ -95,21 +98,20 @@ class VehicleRestAdapterTest {
                 .andExpect(jsonPath("$[1].plate").value("5678DEF"));
 
         verify(getVehicleUseCase, times(1)).execute();
-        verify(vehicleRestMapper, times(1)).toResponseList(domainList);
+        verify(vehicleRestMapper, times(1)).toResponseList(dtoList);
     }
 
     @Test
     @DisplayName("Debe obtener un vehiculo por su ID correctamente con estado 200 OK")
     void shouldGetVehicleByIdSuccessfully() throws Exception {
         // QUE HACE:
-        // - Genera un ID aleatorio y simula un vehiculo del dominio y su DTO de respuesta.
-        // - Configura getVehicleUseCase para devolver el vehiculo al buscar por ese ID.
-        // - Configura el mapper para convertir el vehiculo en su correspondiente respuesta DTO.
+        // - Genera un ID aleatorio y simula el VehicleDTO devuelto por el caso de uso y su DTO de respuesta.
+        // - Configura getVehicleUseCase para devolver el DTO al buscar por ese ID.
+        // - Configura el mapper para convertirlo en su correspondiente respuesta.
         // - Realiza una peticion GET a /v1/vehicles/{id}
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle.setUniqueId(id);
-        VehicleResponse responseDto = new VehicleResponse(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleDTO vehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         when(getVehicleUseCase.getById(id)).thenReturn(vehicle);
         when(vehicleRestMapper.toResponse(vehicle)).thenReturn(responseDto);
@@ -151,14 +153,13 @@ class VehicleRestAdapterTest {
     @DisplayName("Debe obtener un vehiculo por matricula con estado 200 OK")
     void shouldGetVehicleByPlateSuccessfully() throws Exception {
         // QUE HACE:
-        // - Genera un ID, un vehiculo de dominio y su DTO.
-        // - Configura getVehicleUseCase para devolver el vehiculo al buscar por la matricula "1234ABC".
+        // - Genera un ID, el VehicleDTO devuelto por el caso de uso y su respuesta.
+        // - Configura getVehicleUseCase para devolverlo al buscar por la matricula "1234ABC".
         // - Configura el mapper.
         // - Realiza una peticion GET a /v1/vehicles/plate/1234ABC
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle.setUniqueId(id);
-        VehicleResponse responseDto = new VehicleResponse(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleDTO vehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         when(getVehicleUseCase.getByPlate("1234ABC")).thenReturn(vehicle);
         when(vehicleRestMapper.toResponse(vehicle)).thenReturn(responseDto);
@@ -196,7 +197,7 @@ class VehicleRestAdapterTest {
     void shouldCreateVehicleSuccessfully() throws Exception {
         // QUE HACE:
         // - Prepara el request DTO con datos validos.
-        // - Genera los mocks de dominio y mapper correspondientes.
+        // - Simula la traduccion del request al DTO de aplicacion y la respuesta del caso de uso.
         // - Envia una peticion POST serializando el request.
         VehicleRequest request = new VehicleRequest();
         request.type = "CAR";
@@ -209,11 +210,14 @@ class VehicleRestAdapterTest {
         request.active = true;
 
         UUID id = UUID.randomUUID();
-        Vehicle savedVehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        savedVehicle.setUniqueId(id);
-        VehicleResponse responseDto = new VehicleResponse(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleDTO savedVehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
-        when(createVehicleUseCase.execute(any(Vehicle.class))).thenReturn(savedVehicle);
+        // any(VehicleRequest.class) y no el objeto 'request': Spring deserializa el JSON en una
+        // instancia distinta y VehicleRequest no implementa equals().
+        when(vehicleRestMapper.toCreateDTO(any(VehicleRequest.class))).thenReturn(createDTO);
+        when(createVehicleUseCase.execute(createDTO)).thenReturn(savedVehicle);
         when(vehicleRestMapper.toResponse(savedVehicle)).thenReturn(responseDto);
 
         // QUE DEBERIA HACER:
@@ -225,7 +229,7 @@ class VehicleRestAdapterTest {
                 .andExpect(jsonPath("$.uniqueId").value(id.toString()))
                 .andExpect(jsonPath("$.plate").value("1234ABC"));
 
-        verify(createVehicleUseCase, times(1)).execute(any(Vehicle.class));
+        verify(createVehicleUseCase, times(1)).execute(createDTO);
     }
 
     @Test
@@ -233,6 +237,8 @@ class VehicleRestAdapterTest {
     void shouldReturn400WhenCreateWithInvalidType() throws Exception {
         // QUE HACE:
         // - Prepara un request con un tipo de vehiculo no contemplado en el enum (ej: "HELICOPTER").
+        // - Simula que el caso de uso rechaza ese tipo: tras el refactor la conversion a enum
+        //   ocurre en VehicleDTOFactory, dentro de la capa de aplicacion, y ya no en el controlador.
         // - Lanza la peticion POST.
         VehicleRequest request = new VehicleRequest();
         request.type = "HELICOPTER";
@@ -244,16 +250,22 @@ class VehicleRestAdapterTest {
         request.hasSidecar = false;
         request.active = true;
 
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("HELICOPTER", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+
+        when(vehicleRestMapper.toCreateDTO(any(VehicleRequest.class))).thenReturn(createDTO);
+        when(createVehicleUseCase.execute(createDTO))
+                .thenThrow(new InvalidVehicleException("Tipo de vehículo inválido: HELICOPTER"));
+
         // QUE DEBERIA HACER:
-        // Debe fallar al intentar convertir el tipo a enum en el controlador lanzando InvalidVehicleException,
-        // devolviendo 400 Bad Request con el mensaje del error correspondiente.
+        // La InvalidVehicleException que sube desde la aplicacion debe traducirse en un
+        // 400 Bad Request con el mensaje del error, via CustomizedExceptionAdapter.
         mockMvc.perform(post("/v1/vehicles")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Tipo de vehículo inválido: HELICOPTER"));
 
-        verify(createVehicleUseCase, never()).execute(any(Vehicle.class));
+        verify(createVehicleUseCase, times(1)).execute(createDTO);
     }
 
     @Test
@@ -273,13 +285,14 @@ class VehicleRestAdapterTest {
         request.active = true;
 
         // QUE DEBERIA HACER:
-        // Spring Boot interceptara la peticion por el validador @Valid y devolvera 400 Bad Request.
+        // Spring Boot interceptara la peticion por el validador @Valid y devolvera 400 Bad Request
+        // sin llegar a ejecutar el caso de uso.
         mockMvc.perform(post("/v1/vehicles")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
 
-        verify(createVehicleUseCase, never()).execute(any(Vehicle.class));
+        verify(createVehicleUseCase, never()).execute(any(VehicleCreateDTO.class));
     }
 
     @Test
@@ -305,7 +318,7 @@ class VehicleRestAdapterTest {
     void shouldUpdateVehicleSuccessfully() throws Exception {
         // QUE HACE:
         // - Genera un ID aleatorio y un request DTO.
-        // - Simula el vehiculo resultante de la actualizacion y el DTO de respuesta.
+        // - Simula la traduccion del request y el DTO resultante de la actualizacion.
         // - Realiza la llamada PUT a /v1/vehicles/{id}.
         UUID id = UUID.randomUUID();
         VehicleRequest request = new VehicleRequest();
@@ -318,16 +331,17 @@ class VehicleRestAdapterTest {
         request.hasSidecar = false;
         request.active = true;
 
-        Vehicle updatedVehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        updatedVehicle.setUniqueId(id);
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleDTO updatedVehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
-        VehicleResponse responseDto = new VehicleResponse(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-
-        when(updateVehicleUseCase.execute(any(Vehicle.class))).thenReturn(updatedVehicle);
+        when(vehicleRestMapper.toCreateDTO(any(VehicleRequest.class))).thenReturn(createDTO);
+        when(updateVehicleUseCase.execute(id, createDTO)).thenReturn(updatedVehicle);
         when(vehicleRestMapper.toResponse(updatedVehicle)).thenReturn(responseDto);
 
         // QUE DEBERIA HACER:
-        // Debe retornar 200 OK con los datos actualizados del vehiculo.
+        // Debe retornar 200 OK con los datos actualizados del vehiculo, pasando al caso de uso
+        // el id de la URL y el cuerpo por separado.
         mockMvc.perform(put("/v1/vehicles/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -335,6 +349,6 @@ class VehicleRestAdapterTest {
                 .andExpect(jsonPath("$.uniqueId").value(id.toString()))
                 .andExpect(jsonPath("$.plate").value("1234ABC"));
 
-        verify(updateVehicleUseCase, times(1)).execute(any(Vehicle.class));
+        verify(updateVehicleUseCase, times(1)).execute(id, createDTO);
     }
 }
