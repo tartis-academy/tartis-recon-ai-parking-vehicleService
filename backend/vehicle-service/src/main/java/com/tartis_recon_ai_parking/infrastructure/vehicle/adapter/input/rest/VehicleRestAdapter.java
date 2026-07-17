@@ -2,13 +2,11 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest;
 
 import java.util.UUID;
 
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
-import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
-import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
-import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
-import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase; // Import necesario
+import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.response.VehicleResponse;
@@ -49,42 +47,25 @@ public class VehicleRestAdapter {
 
     @GetMapping
     public ResponseEntity<Iterable<VehicleResponse>> getAllVehicles() {
-        Iterable<Vehicle> vehicles = getVehicleUseCase.execute();
+        Iterable<VehicleDTO> vehicles = getVehicleUseCase.execute();
         return ResponseEntity.ok(mapper.toResponseList(vehicles));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<VehicleResponse> getVehicleById(@PathVariable UUID id) throws VehicleNotFoundException {
-        Vehicle vehicle = getVehicleUseCase.getById(id);
+        VehicleDTO vehicle = getVehicleUseCase.getById(id);
         return ResponseEntity.ok(mapper.toResponse(vehicle));
     }
 
     @GetMapping("/plate/{plate}")
     public ResponseEntity<VehicleResponse> getByPlate(@PathVariable String plate) throws VehicleNotFoundException {
-        Vehicle vehicle = getVehicleUseCase.getByPlate(plate);
+        VehicleDTO vehicle = getVehicleUseCase.getByPlate(plate);
         return ResponseEntity.ok(mapper.toResponse(vehicle));
     }
 
     @PostMapping
     public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody VehicleRequest request) {
-        VehicleType type;
-        try {
-            type = VehicleType.valueOf(request.type);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidVehicleException("Tipo de vehículo inválido: " + request.type);
-        }
-
-        Vehicle newVehicle = new Vehicle(
-            type,
-            request.plate,
-            request.brand,
-            request.model,
-            request.color,
-            request.numDoors,
-            request.hasSidecar,
-            request.active
-        );
-        Vehicle savedVehicle = createVehicleUseCase.execute(newVehicle);
+        VehicleDTO savedVehicle = createVehicleUseCase.execute(mapper.toCreateDTO(request));
         return new ResponseEntity<>(mapper.toResponse(savedVehicle), HttpStatus.CREATED);
     }
 
@@ -102,27 +83,10 @@ public class VehicleRestAdapter {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<VehicleResponse> updateVehicle(@PathVariable UUID id, @Valid @RequestBody VehicleRequest request) throws VehicleNotFoundException {
-        VehicleType type;
-        try {
-            type = VehicleType.valueOf(request.type);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidVehicleException("Tipo de vehículo inválido: " + request.type);
-        }
-
-        Vehicle vehicleData = new Vehicle(
-            type,
-            request.plate,
-            request.brand,
-            request.model,
-            request.color,
-            request.numDoors,
-            request.hasSidecar,
-            request.active
-        );
-        vehicleData.setUniqueId(id);
-
-        Vehicle updatedVehicle = updateVehicleUseCase.execute(vehicleData);
+    public ResponseEntity<VehicleResponse> updateVehicle(@PathVariable UUID id,
+                                                         @Valid @RequestBody VehicleRequest request)
+            throws VehicleNotFoundException {
+        VehicleDTO updatedVehicle = updateVehicleUseCase.execute(id, mapper.toCreateDTO(request));
         return ResponseEntity.ok(mapper.toResponse(updatedVehicle));
     }
 }
