@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, release]
+  push:
+    branches: [main, release]
+
+# Si llegan dos push seguidos, cancela el run anterior: no interesa el
+# resultado de un commit que ya esta superado.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # El pom NO esta en la raiz del repo, vive aqui. Sin esto, mvnw no
+    # encuentra proyecto y el job muere en el primer paso.
+    defaults:
+      run:
+        working-directory: backend/vehicle-service
+
+    services:
+      # Postgres desechable, solo para este job. No tiene relacion con el
+      # docker-compose.yml del repo: spring-boot-docker-compose esta
+      # desactivado durante los tests (spring.docker.compose.skip.in-tests).
+      #
+      # Hace falta porque VehicleServiceApplicationTests es un @SpringBootTest:
+      # levanta el contexto entero, JPA incluido, y sin DataSource real no arranca.
+      #
+      # Usuario, password y base deben coincidir con las variables VEHICLE_DB_*
+      # del paso "Build + test", que son las que lee
+      # src/test/resources/application.properties.
+      postgres:
+        image: postgres:15.18-alpine
+        env:
+          POSTGRES_USER: vehicle_user
+          POSTGRES_PASSWORD: vehicle_pass
+          POSTGRES_DB: vehicle_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vehicle_user -d vehicle_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          # La version que declara el pom. El JDK del runner es el correcto:
+          # Lombok 1.18.30 no soporta JDK 25 y revienta al compilar.
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build + test
+        env:
+          VEHICLE_DB_HOST: localhost
+          # El service container expone el 5432 directo. El 5433 del compose es
+          # solo el mapeo en local para no chocar con otros Postgres.
+          VEHICLE_DB_PORT: 5432
+          VEHICLE_DB_NAME: vehicle_db
+          VEHICLE_DB_USER: vehicle_user
+          VEHICLE_DB_PASSWORD: vehicle_pass
+        # verify ya compila: no hace falta un paso de compile aparte.
+        run: ./mvnw -B verify
+
+      - name: Subir informes de test
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          # Las rutas de upload-artifact son desde la raiz del repo:
+          # defaults.working-directory NO aplica aqui.
+          path: backend/vehicle-service/target/surefire-reports/

@@ -2,9 +2,13 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.output.persis
 
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import org.mapstruct.Mapper;
+import org.mapstruct.ReportingPolicy;
 
 // Mapper de infraestructura utilizado para traducir entre el modelo de Dominio y el modelo de Base de Datos.
-@Mapper(componentModel = "spring")
+// unmappedTargetPolicy = ERROR: si un campo del destino no encuentra origen, la compilacion FALLA.
+// Por defecto MapStruct solo emite un warning y genera el mapper sin ese campo, que es como
+// 'hasSidecar' se dejo de persistir sin que nadie se enterara.
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface VehiclePersistenceMapper {
 
     // MapStruct mapeará automáticamente todos los campos que se llaman igual (plate, brand, model, etc.)
