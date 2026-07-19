@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 #
-# Levanta el entorno local completo: red compartida, pgAdmin, SonarQube y el
-# PostgreSQL de vehicle-service.
+# Levanta el entorno local de DEV completo: red compartida, Postgres unico,
+# pgAdmin y SonarQube. Detalle: Obsidian Tartis-Recon-IA.
+#
+# Postgres DEDICADO de vehicle-service (prod/aislado), si hace falta:
+#   (cd backend/vehicle-service && docker compose up -d)
 #
 #   ./setup.sh          levanta todo
 #   ./setup.sh down     para los contenedores (mantiene los datos)
@@ -80,11 +83,8 @@ done
 
 # --- 3. Levantar contenedores -----------------------------------------------
 
-info "Herramientas compartidas (pgAdmin + SonarQube)"
+info "Herramientas compartidas (Postgres de dev + pgAdmin + SonarQube)"
 docker compose up -d
-
-info "PostgreSQL de vehicle-service"
-(cd "$VEHICLE_DIR" && docker compose up -d)
 
 # --- 4. Esperar a que esten sanos -------------------------------------------
 
@@ -110,9 +110,9 @@ wait_healthy() {
 
 info "Esperando a los servicios"
 FAILED=0
-wait_healthy parking-vehicle-postgres 60  || FAILED=1
-wait_healthy parking-pgadmin          60  || FAILED=1
-wait_healthy parking-sonarqube        240 || FAILED=1
+wait_healthy parking-dev-postgres 60  || FAILED=1
+wait_healthy parking-pgadmin      60  || FAILED=1
+wait_healthy parking-sonarqube    240 || FAILED=1
 
 # --- 5. Resumen -------------------------------------------------------------
 
@@ -128,9 +128,9 @@ cat <<EOF
   pgAdmin      http://localhost:${PGADMIN_PORT:-5050}
   SonarQube    http://localhost:${SONARQUBE_PORT:-9000}   (admin / admin)
 
-  BD vehicle-service
-    desde tu maquina    localhost:${VEHICLE_DB_PORT:-5433}
-    desde pgAdmin       parking-vehicle-postgres:5432
+  Postgres de dev (schemas: vehicle, spot, tariff, ticket, stay)
+    desde tu maquina    localhost:${DB_PORT:-5432}
+    desde pgAdmin       parking-dev-postgres:5432
 
   Parar:   ./setup.sh down       Parar y borrar datos:  ./setup.sh clean
 EOF
