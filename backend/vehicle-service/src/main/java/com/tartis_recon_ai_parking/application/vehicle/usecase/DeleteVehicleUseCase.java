@@ -26,7 +26,7 @@ public class DeleteVehicleUseCase {
         .orElseThrow(() -> new VehicleNotFoundException("Vehículo no encontrado con id: " + id));
 
         // 2. El dominio aplica el cambio de estado.
-        vehicle.setActive(false);
+        vehicle = vehicle.deactivate();
 
         // 3. Persistimos. Sin este save() el cambio se queda en memoria:
         //    el objeto de dominio NO es una entidad gestionada por JPA,

@@ -20,7 +20,7 @@ class VehicleTest {
         // QUE HACE: 
         // Instancia un objeto Vehicle de tipo CAR con matricula, marca, modelo, color, 
         // 5 puertas (valor permitido), sin sidecar (hasSidecar = false) y activo.
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 5, false, true);
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 5, false, true);
 
         // QUE DEBERIA HACER:
         // Debe construirse con exito y comprobar mediante aserciones que los getters 
@@ -39,8 +39,8 @@ class VehicleTest {
     void shouldCreateValidMotorbike() throws InvalidVehicleException {
         // QUE HACE: 
         // Instancia dos objetos de tipo MOTORBIKE con 0 puertas: uno con sidecar y otro sin sidecar.
-        Vehicle motorbikeWithSidecar = new Vehicle(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, true, true);
-        Vehicle motorbikeWithoutSidecar = new Vehicle(VehicleType.MOTORBIKE, "5678DEG", "Honda", "CBR", "Black", 0, false, true);
+        Vehicle motorbikeWithSidecar = Vehicle.create(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, true, true);
+        Vehicle motorbikeWithoutSidecar = Vehicle.create(VehicleType.MOTORBIKE, "5678DEG", "Honda", "CBR", "Black", 0, false, true);
 
         // QUE DEBERIA HACER:
         // Ambos objetos deben crearse exitosamente y verificar que el campo de sidecar 
@@ -62,7 +62,7 @@ class VehicleTest {
         // assertThatThrownBy: Captura la excepcion que lance la expresion lambda.
         // isInstanceOf: Valida que la excepcion capturada sea exactamente de la clase indicada.
         // hasMessageContaining: Valida que el mensaje de error de la excepcion tenga ese fragmento de texto.
-        assertThatThrownBy(() -> new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, true, true))
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, true, true))
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Cars do not have sidecar");
     }
@@ -81,7 +81,7 @@ class VehicleTest {
         // Debe lanzar InvalidVehicleException en cada iteracion del test parametrizado, 
         // con un mensaje que explique que el numero de puertas del coche es incorrecto.
         assertThatThrownBy(
-                () -> new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", doors, false, true))
+                () -> Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", doors, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Incorrect number of doors for a car");
     }
@@ -94,7 +94,7 @@ class VehicleTest {
         // QUE DEBERIA HACER:
         // Debe lanzar InvalidVehicleException indicando que el numero de puertas no puede ser negativo,
         // validandose en el primer paso de comprobacion de puertas.
-        assertThatThrownBy(() -> new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", -1, false, true))
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", -1, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Number of doors cannot be a negative number");
     }
@@ -107,7 +107,7 @@ class VehicleTest {
         // QUE DEBERIA HACER:
         // Debe lanzar una InvalidVehicleException porque las motos no pueden tener puertas, 
         // validando que el mensaje de error corresponda a este caso de negocio.
-        assertThatThrownBy(() -> new Vehicle(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 2, false, true))
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 2, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Incorrect number of doors for a motorbike");
     }
@@ -120,11 +120,11 @@ class VehicleTest {
         // QUE DEBERIA HACER:
         // Debe lanzar InvalidVehicleException con mensajes de error descriptivos ("Vehicle type is null" 
         // o "Vehicle plate is null") impidiendo la construccion de un objeto invalido.
-        assertThatThrownBy(() -> new Vehicle(null, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true))
+        assertThatThrownBy(() -> Vehicle.create(null, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Vehicle type is null");
 
-        assertThatThrownBy(() -> new Vehicle(VehicleType.CAR, null, "Toyota", "Corolla", "Red", 4, false, true))
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, null, "Toyota", "Corolla", "Red", 4, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Vehicle plate is null");
     }
@@ -135,17 +135,17 @@ class VehicleTest {
         // QUE HACE: 
         // Crea un coche valido y luego intenta modificar la matricula a null mediante setPlate(),
         // o intenta asignarle un sidecar mediante setHasSidecar(true).
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         // QUE DEBERIA HACER:
-        // Ambos setters deben lanzar InvalidVehicleException porque violan las reglas del dominio,
-        // asegurando que no se pueda corromper el estado del objeto despues de creado.
-        assertThatThrownBy(() -> vehicle.setPlate(null))
+        // Las actualizaciones deben lanzar InvalidVehicleException porque violan las reglas del dominio,
+        // asegurando que no se pueda corromper el estado del objeto al actualizarlo.
+        assertThatThrownBy(() -> vehicle.update(vehicle.getType(), null, vehicle.getBrand(), vehicle.getModel(), vehicle.getColor(), vehicle.getNumDoors(), vehicle.getHasSidecar(), vehicle.isActive()))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Null vehicle plate");
+                .hasMessageContaining("Vehicle plate is null");
 
-        assertThatThrownBy(() -> vehicle.setHasSidecar(true))
+        assertThatThrownBy(() -> vehicle.update(vehicle.getType(), vehicle.getPlate(), vehicle.getBrand(), vehicle.getModel(), vehicle.getColor(), vehicle.getNumDoors(), true, vehicle.isActive()))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Cars cannot have sidecar");
+                .hasMessageContaining("Cars do not have sidecar");
     }
 }

@@ -44,18 +44,12 @@ public class UpdateVehicleUseCase {
                             "Ya existe un vehículo con la matrícula: " + newData.getPlate());
                 });
 
-        // 4. Modificamos los atributos a traves de los setters con validacion.
-        //    setType va primero: setHasSidecar valida contra el tipo ya asignado.
-        existingVehicle.setType(newData.getType());
-        existingVehicle.setPlate(newData.getPlate());
-        existingVehicle.setBrand(newData.getBrand());
-        existingVehicle.setModel(newData.getModel());
-        existingVehicle.setColor(newData.getColor());
-        existingVehicle.setNumDoors(newData.getNumDoors());
-        existingVehicle.setHasSidecar(newData.getHasSidecar());
-        existingVehicle.setActive(newData.isActive());
+        // 4. Modificamos los atributos
+        Vehicle updatedVehicle = existingVehicle.update(newData.getType(), newData.getPlate(), newData.getBrand(), newData.getModel(),
+            newData.getColor(), newData.getNumDoors(), newData.getHasSidecar(), newData.isActive());
+
 
         // 5. Guardamos los cambios.
-        return VehicleDTOFactory.toDTO(vehiclePersistence.save(existingVehicle));
+        return VehicleDTOFactory.toDTO(vehiclePersistence.save(updatedVehicle));
     }
 }
