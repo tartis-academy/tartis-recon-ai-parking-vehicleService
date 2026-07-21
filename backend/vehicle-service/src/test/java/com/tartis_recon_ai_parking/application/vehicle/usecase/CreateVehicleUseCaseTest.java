@@ -49,7 +49,7 @@ class CreateVehicleUseCaseTest {
         // 3. Configura el mock para que 'save' devuelva el vehiculo de dominio ya persistido.
         // 4. Ejecuta el caso de uso con el DTO.
         VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        Vehicle savedVehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle savedVehicle = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.existsByPlate("1234ABC")).thenReturn(false);

@@ -42,8 +42,7 @@ class DeleteVehicleUseCaseTest {
         // 2. Configura el mock para retornar ese vehiculo al buscarlo por su ID.
         // 3. Ejecuta la desactivacion a traves del caso de uso.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle.setUniqueId(id);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));

@@ -42,7 +42,7 @@ class GetVehicleUseCaseTest {
         // 1. Crea un vehiculo de dominio valido, que es lo que devuelve la persistencia.
         // 2. Configura el mock para que, al buscar por matricula "1234ABC", retorne el vehiculo envuelto en un Optional.
         // 3. Llama al metodo 'getByPlate' en el caso de uso.
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findByPlate("1234ABC")).thenReturn(Optional.of(vehicle));
@@ -80,8 +80,7 @@ class GetVehicleUseCaseTest {
         // 2. Configura el mock para que al buscar por ese UUID devuelva el vehiculo.
         // 3. Invoca a 'getById' en el caso de uso.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle.setUniqueId(id);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
@@ -120,8 +119,8 @@ class GetVehicleUseCaseTest {
         // 1. Crea dos vehiculos de dominio diferentes.
         // 2. Configura el mock para retornar una lista que contenga ambos vehiculos cuando se llame a findAll().
         // 3. Llama al metodo 'execute' del caso de uso.
-        Vehicle vehicle1 = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        Vehicle vehicle2 = new Vehicle(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, false, true);
+        Vehicle vehicle1 = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle2 = Vehicle.create(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findAll()).thenReturn(List.of(vehicle1, vehicle2));
