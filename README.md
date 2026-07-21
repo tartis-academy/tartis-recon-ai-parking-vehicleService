@@ -2,30 +2,22 @@
 
 ## Levantar el entorno local
 
-Lo más rápido: un script que hace todos los pasos de abajo (red, `.env`, contenedores) y espera a que estén listos.
+Las herramientas compartidas (Postgres de dev con los 5 schemas, pgAdmin,
+SonarQube) ya NO viven en este repo: están en
+[`tartis-recon-ia-parking-infra`](https://github.com/tartis-academy/tartis-recon-ia-parking-infra).
+Levántalas desde allí primero:
 
 ```bash
-./setup.sh              # levanta todo
-./setup.sh down         # para los contenedores
-./setup.sh clean        # para y BORRA los datos de la BD
+cd ../tartis-recon-ia-parking-infra
+./setup.sh
 ```
 
-Si prefieres ir a mano, los pasos son estos.
+Esto es lo único que hace falta para el día a día en dev: vehicle-service se
+conecta al Postgres compartido usando el schema `vehicle`.
 
-Crea la red compartida que conecta pgAdmin con los Postgres de cada servicio (solo la primera vez).
-
-```bash
-docker network create parking-shared
-```
-
-Levanta las herramientas compartidas: pgAdmin en el 5050 y SonarQube en el 9000.
-
-```bash
-cp .env.example .env
-docker compose up -d
-```
-
-Levanta el PostgreSQL dedicado de vehicle-service en el puerto 5433.
+El PostgreSQL DEDICADO de vehicle-service (database-per-service real, perfil
+`prod` o para levantar este servicio aislado) sí vive aquí, en
+`backend/vehicle-service`:
 
 ```bash
 cd backend/vehicle-service
@@ -33,13 +25,13 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Comprueba que los contenedores estén `healthy`.
+Comprueba que el contenedor esté `healthy`.
 
 ```bash
 docker compose ps
 ```
 
-Para los contenedores (con `-v` además borra los datos de la BD).
+Para el contenedor (con `-v` además borra los datos de la BD).
 
 ```bash
 docker compose down
@@ -49,17 +41,14 @@ docker compose down
 
 | Dato | Valor |
 |---|---|
-| pgAdmin | http://localhost:5050 (usuario y contraseña de tu `.env`) |
-| SonarQube | http://localhost:9000 (`admin`/`admin`) |
-| BD desde tu máquina | `localhost:5433` · `vehicle_db` · `vehicle_user` |
-| BD desde pgAdmin | `parking-vehicle-postgres:5432` (nombre del contenedor, puerto interno) |
+| BD dedicada desde tu máquina | `localhost:5433` · `vehicle_db` · `vehicle_user` |
+| BD dedicada desde pgAdmin | `parking-vehicle-postgres:5432` (nombre del contenedor, puerto interno) |
+
+pgAdmin y SonarQube se levantan desde `tartis-recon-ia-parking-infra`.
 
 ## Problemas frecuentes
 
-`network parking-shared ... not found` → te falta el primer comando.
-
-SonarQube arranca y se muere → `sudo sysctl -w vm.max_map_count=262144`.
-
-pgAdmin reinicia en bucle → tu `PGADMIN_EMAIL` no es válido; pgAdmin rechaza dominios reservados como `.local`.
+`network parking-shared ... not found` → te falta crear la red desde el repo
+de infra (`docker network create parking-shared`, o `./setup.sh` allí).
 
 Cambias el `.env` y no se entera → `docker compose up -d --force-recreate` (si tocas usuario o contraseña de Postgres, además `docker compose down -v`).
