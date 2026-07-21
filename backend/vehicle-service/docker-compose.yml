@@ -1,14 +1,7 @@
-# PostgreSQL dedicado de vehicle-service (database-per-service).
-# No depende del compose de la raiz: se levanta solo con
+# PostgreSQL dedicado de vehicle-service (database-per-service real, perfil
+# prod o servicio aislado). Detalle: Obsidian Tartis-Recon-IA.
+#
 #   docker compose up -d
-# desde este directorio.
-#
-# Se conecta a la red externa parking-shared para que pgAdmin (definido en el
-# compose de la raiz) pueda registrar esta BD. Crear la red una vez con:
-#   docker network create parking-shared
-#
-# Desde pgAdmin el host NO es localhost, es el nombre del contenedor:
-#   host: parking-vehicle-postgres   port: 5432
 
 services:
   postgres:
@@ -20,14 +13,10 @@ services:
       POSTGRES_PASSWORD: ${VEHICLE_DB_PASSWORD}
       POSTGRES_DB: ${VEHICLE_DB_NAME}
     ports:
-      # Puerto distinto del 5432 por defecto: cuando el resto de servicios
-      # tengan su propio Postgres, todos pelearian por el mismo puerto del host.
       - "${VEHICLE_DB_PORT:-5433}:5432"
     volumes:
       - parking-vehicle-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      # Mismo usuario y misma BD que arriba: si no coinciden, el healthcheck
-      # comprueba algo que no es lo que usa el servicio.
       test: ["CMD-SHELL", "pg_isready -U ${VEHICLE_DB_USER} -d ${VEHICLE_DB_NAME}"]
       interval: 5s
       timeout: 3s
