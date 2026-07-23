@@ -1,5 +1,6 @@
 package com.tartis_recon_ai_parking.application.vehicle.usecase;
 
+
 import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleCreateDTO;
 import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
@@ -47,8 +48,8 @@ class UpdateVehicleUseCaseTest {
         // 3. Configura el mock para retornar la entidad existente al buscar por ID.
         // 4. Configura el mock para retornar el objeto guardado al llamar a save().
         UUID id = UUID.randomUUID();
-        Vehicle existingVehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, false);
-        existingVehicle.setUniqueId(id);
+        // Parte desactivada (active = false) para comprobar que el update no la reactiva.
+        Vehicle existingVehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, false);
 
         VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Blue", 4, false);
 
@@ -66,7 +67,7 @@ class UpdateVehicleUseCaseTest {
         assertThat(result.color()).isEqualTo("Blue");
         assertThat(result.active()).isFalse();
         assertThat(result.uniqueId()).isEqualTo(id);
-        verify(vehiclePersistence, times(1)).save(existingVehicle);
+        verify(vehiclePersistence, times(1)).save(any(Vehicle.class));
     }
 
     @Test

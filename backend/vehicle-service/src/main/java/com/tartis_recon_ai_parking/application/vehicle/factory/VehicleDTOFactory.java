@@ -32,7 +32,7 @@ public final class VehicleDTOFactory {
     }
 
     public static Vehicle toDomain(VehicleCreateDTO dto) {
-        return new Vehicle(
+        return Vehicle.create(
                 parseType(dto.type()),
                 dto.plate(),
                 dto.brand(),
