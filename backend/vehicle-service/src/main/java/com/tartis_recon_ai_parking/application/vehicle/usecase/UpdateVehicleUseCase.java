@@ -46,6 +46,7 @@ public class UpdateVehicleUseCase {
 
         // 4. Modificamos los atributos a traves de los setters con validacion.
         //    setType va primero: setHasSidecar valida contra el tipo ya asignado.
+        //    'active' no se toca aqui: solo se cambia via PATCH /{id}/status.
         existingVehicle.setType(newData.getType());
         existingVehicle.setPlate(newData.getPlate());
         existingVehicle.setBrand(newData.getBrand());
@@ -53,7 +54,6 @@ public class UpdateVehicleUseCase {
         existingVehicle.setColor(newData.getColor());
         existingVehicle.setNumDoors(newData.getNumDoors());
         existingVehicle.setHasSidecar(newData.getHasSidecar());
-        existingVehicle.setActive(newData.isActive());
 
         // 5. Guardamos los cambios.
         return VehicleDTOFactory.toDTO(vehiclePersistence.save(existingVehicle));
