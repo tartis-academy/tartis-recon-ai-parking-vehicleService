@@ -40,7 +40,7 @@ public final class VehicleDTOFactory {
                 dto.color(),
                 dto.numDoors(),
                 dto.hasSidecar(),
-                dto.active());
+                true);
     }
 
     private static VehicleType parseType(String type) {

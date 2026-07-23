@@ -44,10 +44,10 @@ public class UpdateVehicleUseCase {
                             "Ya existe un vehículo con la matrícula: " + newData.getPlate());
                 });
 
-        // 4. Modificamos los atributos
+        // 4. Modificamos los atributos. 'active' no se toca aqui: se conserva el
+        //    valor actual del vehiculo; solo cambia via PATCH /{id}/status.
         Vehicle updatedVehicle = existingVehicle.update(newData.getType(), newData.getPlate(), newData.getBrand(), newData.getModel(),
-            newData.getColor(), newData.getNumDoors(), newData.getHasSidecar(), newData.isActive());
-
+            newData.getColor(), newData.getNumDoors(), newData.getHasSidecar(), existingVehicle.isActive());
 
         // 5. Guardamos los cambios.
         return VehicleDTOFactory.toDTO(vehiclePersistence.save(updatedVehicle));

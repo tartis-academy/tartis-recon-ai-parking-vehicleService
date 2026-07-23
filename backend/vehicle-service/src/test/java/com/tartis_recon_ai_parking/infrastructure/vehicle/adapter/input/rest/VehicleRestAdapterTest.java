@@ -207,10 +207,9 @@ class VehicleRestAdapterTest {
         request.color = "Red";
         request.numDoors = 4;
         request.hasSidecar = false;
-        request.active = true;
 
         UUID id = UUID.randomUUID();
-        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false);
         VehicleDTO savedVehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
         VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
@@ -248,9 +247,8 @@ class VehicleRestAdapterTest {
         request.color = "Red";
         request.numDoors = 4;
         request.hasSidecar = false;
-        request.active = true;
 
-        VehicleCreateDTO createDTO = new VehicleCreateDTO("HELICOPTER", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("HELICOPTER", "1234ABC", "Toyota", "Corolla", "Red", 4, false);
 
         when(vehicleRestMapper.toCreateDTO(any(VehicleRequest.class))).thenReturn(createDTO);
         when(createVehicleUseCase.execute(createDTO))
@@ -282,7 +280,6 @@ class VehicleRestAdapterTest {
         request.color = "Red";
         request.numDoors = 4;
         request.hasSidecar = false;
-        request.active = true;
 
         // QUE DEBERIA HACER:
         // Spring Boot interceptara la peticion por el validador @Valid y devolvera 400 Bad Request
@@ -329,9 +326,8 @@ class VehicleRestAdapterTest {
         request.color = "Red";
         request.numDoors = 4;
         request.hasSidecar = false;
-        request.active = true;
 
-        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false);
         VehicleDTO updatedVehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
         VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
