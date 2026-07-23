@@ -2,6 +2,8 @@ package com.tartis_recon_ai_parking.application.vehicle.port.output;
 
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import java.util.Optional;
+import java.util.List;
+import java.util.UUID;
 
 /*
  Puerto de Salida para la persistencia de Vehicle
@@ -9,8 +11,17 @@ import java.util.Optional;
 public interface VehiclePersistence {
 
     // Guarda o actualiza un vehiculo
-    Vehicle save(Vehicle vechicle);
+    Vehicle save(Vehicle vehicle);
 
     // Busca un vehiculo especifico segun su matricula
     Optional<Vehicle> findByPlate(String plate);
+
+    // Nuevo método para verificar si el vehículo existe
+    boolean existsByPlate(String plate);
+
+//metodod para listar los coches 
+    List<Vehicle> findAll();
+
+    // Busca un vehiculo especifico segun su id
+    Optional<Vehicle> findById(UUID id);
 }

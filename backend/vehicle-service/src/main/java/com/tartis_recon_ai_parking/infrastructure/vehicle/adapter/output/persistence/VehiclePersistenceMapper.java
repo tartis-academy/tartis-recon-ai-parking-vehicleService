@@ -2,18 +2,39 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.output.persis
 
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.ObjectFactory;
+import org.mapstruct.ReportingPolicy;
 
 // Mapper de infraestructura utilizado para traducir entre el modelo de Dominio y el modelo de Base de Datos.
-@Mapper(componentModel = "spring")
+// unmappedTargetPolicy = ERROR: si un campo del destino no encuentra origen, la compilacion FALLA.
+// Por defecto MapStruct solo emite un warning y genera el mapper sin ese campo, que es como
+// 'hasSidecar' se dejo de persistir sin que nadie se enterara.
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface VehiclePersistenceMapper {
 
-    // Convierte un objeto del modelo de dominio (Vehicle) a una entidad tecnológica (VehicleEntity).
-    @Mapping(source = "id", target = "uniqueId")
+    // MapStruct mapeará automáticamente todos los campos que se llaman igual (plate, brand, model, etc.)
     VehicleEntity toEntity(Vehicle vehicle);
 
-    // Convierte una entidad tecnológica (VehicleEntity) recuperada de la base de datos de vuelta al modelo de dominio puro (Vehicle).
-    @Mapping(source = "uniqyeId", target = "id")
     Vehicle toDomain(VehicleEntity entity);
 
+    @ObjectFactory
+    default Vehicle reconstruct(VehicleEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        return Vehicle.reconstruct(
+            entity.getUniqueId(),
+            entity.getType(),
+            entity.getPlate(),
+            entity.getBrand(),
+            entity.getModel(),
+            entity.getColor(),
+            entity.getNumDoors(),
+            entity.getHasSidecar(),
+            entity.getActive()
+        );
+    }
+
+    
+    
 }

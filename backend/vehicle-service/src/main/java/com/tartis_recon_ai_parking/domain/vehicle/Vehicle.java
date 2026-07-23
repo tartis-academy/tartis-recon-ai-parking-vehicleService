@@ -1,8 +1,11 @@
 package com.tartis_recon_ai_parking.domain.vehicle;
 
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
+import java.util.UUID;
 
 public class Vehicle{
+
+    private UUID uniqueId;
 
     private VehicleType type;
     private String plate;
@@ -10,119 +13,105 @@ public class Vehicle{
     private String model;
     private String color;
     private int numDoors;
-    private boolean hasSideCar;
+    private boolean hasSidecar;
     private boolean active;
 
-    //Default constructor
-    public Vehicle(){}
-
-    //Vehicle constructor
-    public Vehicle(VehicleType type, String plate, String brand, String model, String color,
-        int numDoors, boolean hasSideCar, boolean active) throws InvalidVehicleException{
-
-            //#region Data check (Separate if-statements for legibility)
-                if(type != VehicleType.CAR && type != VehicleType.MOTORBIKE && type != VehicleType.CAR_PMR) throw new InvalidVehicleException("Invalid vehicle type.");
-                if(type != VehicleType.MOTORBIKE && hasSideCar) throw new InvalidVehicleException("Invalid vehicle data.");
-                if(type == null || brand == null || model == null || color == null || plate == null) throw new InvalidVehicleException("Null vehicle data");
-            //#endregion
-
-            //#region Attribute initialization
-                this.type = type;
-                this.plate = plate;
-                this.brand = brand;
-                this.model = model;
-                this.color = color;
-                this.numDoors = numDoors;
-                this.hasSideCar = hasSideCar;
-                this.active = active;
-            //#endregion 
+    public static Vehicle create(VehicleType type, String plate, String brand, String model, String color,
+        int numDoors, boolean hasSidecar, boolean active){
+            return new Vehicle(UUID.randomUUID(), type, plate, brand, model, color, numDoors, hasSidecar, active);
     }
 
+    public static Vehicle reconstruct(UUID id, VehicleType type, String plate, String brand, String model, String color,
+        int numDoors, boolean hasSidecar, boolean active){
+            return new Vehicle(id, type, plate, brand, model, color, numDoors, hasSidecar, active);
+    }
 
-    //#region Getters
-        public VehicleType getType() {
-            return type;
-        }
-    
-        public String getPlate() {
-            return plate;
-        }
-    
-        public String getBrand() {
-            return brand;
-        }
-    
-        public String getModel() {
-            return model;
-        }
-    
-        public String getColor() {
-            return color;
-        }
-    
-        public int getNumDoors() {
-            return numDoors;
-        }
-    
-        public boolean isHasSideCar() {
-            return hasSideCar;
-        }
-    
-        public boolean isActive() {
-            return active;
-        }
-    //#endregion
+    //Vehicle constructor
+    private Vehicle(UUID id, VehicleType type, String plate, String brand, String model, String color,
+        int numDoors, boolean hasSidecar, boolean active){
 
-    //#region Setters
-        public void setType(VehicleType type) throws InvalidVehicleException {
-            if (type == null) {
-                throw new InvalidVehicleException("Null vehicle data");
-            }
+            validateData(type, plate, brand, model, color, numDoors, hasSidecar);
+
+            this.uniqueId = id;
             this.type = type;
-        }
-    
-        public void setPlate(String plate) throws InvalidVehicleException {
-            if (plate == null) {
-                throw new InvalidVehicleException("Null vehicle data");
-            }
             this.plate = plate;
-        }
-    
-        public void setBrand(String brand) throws InvalidVehicleException {
-            if (brand == null) {
-                throw new InvalidVehicleException("Null vehicle data");
-            }
             this.brand = brand;
-        }
-    
-        public void setModel(String model) throws InvalidVehicleException {
-            if (model == null) {
-                throw new InvalidVehicleException("Null vehicle data");
-            }
             this.model = model;
-        }
-    
-        public void setColor(String color) throws InvalidVehicleException {
-            if (color == null) {
-                throw new InvalidVehicleException("Null vehicle data");
-            }
             this.color = color;
-        }
-    
-        public void setNumDoors(int numDoors) {
             this.numDoors = numDoors;
-        }
-    
-        public void setHasSideCar(boolean hasSideCar) throws InvalidVehicleException {
-            if (this.type != VehicleType.MOTORBIKE && hasSideCar) {
-                throw new InvalidVehicleException("Invalid vehicle data.");
-            }
-            this.hasSideCar = hasSideCar;
-        }
-    
-        public void setActive(boolean active) {
+            this.hasSidecar = hasSidecar;
             this.active = active;
-        }
-    //#endregion
+
+    }
+
+    private void validateData(VehicleType type, String plate, String brand, String model, String color, int numDoors, boolean hasSidecar){
+
+        if(type == null) throw new InvalidVehicleException("Vehicle type is null");
+        if(type != VehicleType.MOTORBIKE && hasSidecar) throw new InvalidVehicleException("Cars do not have sidecar");
+
+        //Cars can only have 2 or 4 doors.
+        //Bikes cannot have doors. 
+        if(numDoors < 0) throw new InvalidVehicleException("Number of doors cannot be a negative number");
+        if(type != VehicleType.MOTORBIKE && !(numDoors == 2 || numDoors == 4 || numDoors == 5)) throw new InvalidVehicleException("Incorrect number of doors for a car");
+        if(type == VehicleType.MOTORBIKE && numDoors > 0) throw new InvalidVehicleException("Incorrect number of doors for a motorbike");
+
+        if(brand == null) throw new InvalidVehicleException("Vehicle brand is null");
+        if(model == null) throw new InvalidVehicleException("Vehicle model is null");
+        if(color == null) throw new InvalidVehicleException("Vehicle color is null");
+        if(plate == null) throw new InvalidVehicleException("Vehicle plate is null");
+   
+    }
+
+    public Vehicle update(VehicleType type, String plate, String brand, String model, 
+        String color, int numDoors, boolean hasSidecar, boolean active){
+            return new Vehicle(this.uniqueId, type, plate, brand, model, color, numDoors, hasSidecar, active);
+    }
+
+    public Vehicle activate(){
+        return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model, 
+            this.color, this.numDoors, this.hasSidecar, true);
+    }
+
+    public Vehicle deactivate(){
+        return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model, 
+            this.color, this.numDoors, this.hasSidecar, false);
+    }
+
+    //=============== Getters ===============
+    public UUID getUniqueId() {
+        return uniqueId;
+    }
+
+    public VehicleType getType() {
+        return type;
+    }
+    
+    public String getPlate() {
+         return plate;
+    }
+    
+    public String getBrand() {
+        return brand;
+    }
+    
+    public String getModel() {
+        return model;
+    }
+    
+    public String getColor() {
+        return color;
+    }
+    
+    public int getNumDoors() {
+        return numDoors;
+    }
+    
+    public boolean getHasSidecar() {
+        return hasSidecar;
+    }
+    
+    public boolean isActive() {
+        return active;
+    }
 
 }
