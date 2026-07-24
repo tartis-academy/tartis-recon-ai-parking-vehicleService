@@ -32,14 +32,15 @@ public final class VehicleDTOFactory {
     }
 
     public static Vehicle toDomain(VehicleCreateDTO dto) {
+        VehicleType type = parseType(dto.type());
         return Vehicle.create(
-                parseType(dto.type()),
+                type,
                 dto.plate(),
-                dto.brand(),
-                dto.model(),
-                dto.color(),
-                dto.numDoors(),
-                dto.hasSidecar(),
+                dto.brand() != null ? dto.brand() : "Desconocido",
+                dto.model() != null ? dto.model() : "Desconocido",
+                dto.color() != null ? dto.color() : "Desconocido",
+                dto.numDoors() != null ? dto.numDoors() : defaultNumDoors(type),
+                dto.hasSidecar() != null ? dto.hasSidecar() : false,
                 true);
     }
 
@@ -49,5 +50,9 @@ public final class VehicleDTOFactory {
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new InvalidVehicleException("Tipo de vehículo inválido: " + type);
         }
+    }
+
+    private static int defaultNumDoors(VehicleType type) {
+        return type == VehicleType.MOTORBIKE ? 0 : 4;
     }
 }
