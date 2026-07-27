@@ -89,6 +89,20 @@ class VehicleRestMapperTest {
     }
 
     @Test
+    @DisplayName("Debe retornar null al mapear un request nulo")
+    void shouldReturnNullWhenMappingNullRequest() {
+        // QUE HACE:
+        // Llama a toCreateDTO pasando un request nulo, la rama de guarda que
+        // MapStruct genera al principio de cada metodo del mapper.
+        VehicleCreateDTO createDTO = mapper.toCreateDTO(null);
+
+        // QUE DEBERIA HACER:
+        // Devolver null en lugar de lanzar NullPointerException, igual que hacen
+        // toResponse y toResponseList.
+        assertThat(createDTO).isNull();
+    }
+
+    @Test
     @DisplayName("Debe mapear una lista de VehicleDTO a una lista de DTOs de respuesta correctamente")
     void shouldMapVehicleListToResponseList() {
         // QUE HACE:

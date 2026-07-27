@@ -145,6 +145,53 @@ class VehicleTest {
     }
 
     @Test
+    @DisplayName("Debe lanzar InvalidVehicleException si marca, modelo o color son nulos")
+    void shouldThrowExceptionWhenTextParametersAreNull() {
+        // QUE HACE:
+        // Intenta crear un coche valido en todo lo demas pero con brand, model o
+        // color a null. Estas tres comprobaciones ocurren ANTES de validPlate, asi
+        // que el mensaje debe senalar el campo de texto y no la matricula.
+        // QUE DEBERIA HACER:
+        // Debe lanzar InvalidVehicleException nombrando el campo nulo concreto,
+        // impidiendo persistir un vehiculo con datos incompletos.
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", null, "Corolla", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: brand can't be null");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", null, "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: model can't be null");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", null, 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: color can't be null");
+    }
+
+    @Test
+    @DisplayName("update tambien debe rechazar marca, modelo o color nulos")
+    void shouldThrowExceptionWhenUpdatingWithNullTextParameters() throws InvalidVehicleException {
+        // QUE HACE:
+        // Crea un vehiculo valido y luego intenta actualizarlo dejando a null cada
+        // uno de los campos de texto obligatorios.
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+
+        // QUE DEBERIA HACER:
+        // update reutiliza validateData, asi que debe aplicar las mismas reglas que
+        // create: el objeto no puede corromperse por una actualizacion parcial.
+        assertThatThrownBy(() -> vehicle.update(VehicleType.CAR, "1234BCD", null, "Corolla", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: brand can't be null");
+
+        assertThatThrownBy(() -> vehicle.update(VehicleType.CAR, "1234BCD", "Toyota", null, "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: model can't be null");
+
+        assertThatThrownBy(() -> vehicle.update(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", null, 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: color can't be null");
+    }
+
+    @Test
     @DisplayName("Debe lanzar InvalidVehicleException si parametros de texto obligatorios estan en blanco")
     void shouldThrowExceptionWhenStringParametersAreBlank() {
         assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "  ", "Corolla", "Red", 4, false, true))
