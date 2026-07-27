@@ -85,7 +85,7 @@ public class VehicleRestAdapter {
 
     @PutMapping("/{id}")
     public ResponseEntity<VehicleResponse> updateVehicle(@PathVariable UUID id,
-                                                         @Valid @RequestBody VehicleRequest request) throws VehicleNotFoundException {
+                                                         @Valid @RequestBody VehicleRequest request) throws VehicleNotFoundException, ExistingVehicleException {
         VehicleDTO updatedVehicle = updateVehicleUseCase.execute(id, mapper.toCreateDTO(request));
         return ResponseEntity.ok(mapper.toResponse(updatedVehicle));
     }
