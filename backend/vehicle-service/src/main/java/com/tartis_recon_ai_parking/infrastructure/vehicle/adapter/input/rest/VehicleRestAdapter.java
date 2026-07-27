@@ -7,6 +7,7 @@ import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseC
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.response.VehicleResponse;
@@ -64,7 +65,7 @@ public class VehicleRestAdapter {
     }
 
     @PostMapping
-    public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody VehicleRequest request) {
+    public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody VehicleRequest request) throws ExistingVehicleException {
         VehicleDTO savedVehicle = createVehicleUseCase.execute(mapper.toCreateDTO(request));
         return new ResponseEntity<>(mapper.toResponse(savedVehicle), HttpStatus.CREATED);
     }
@@ -84,8 +85,7 @@ public class VehicleRestAdapter {
 
     @PutMapping("/{id}")
     public ResponseEntity<VehicleResponse> updateVehicle(@PathVariable UUID id,
-                                                         @Valid @RequestBody VehicleRequest request)
-            throws VehicleNotFoundException {
+                                                         @Valid @RequestBody VehicleRequest request) throws VehicleNotFoundException {
         VehicleDTO updatedVehicle = updateVehicleUseCase.execute(id, mapper.toCreateDTO(request));
         return ResponseEntity.ok(mapper.toResponse(updatedVehicle));
     }

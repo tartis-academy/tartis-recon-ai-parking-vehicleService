@@ -137,14 +137,14 @@ class VehicleRestAdapterTest {
         // - Configura getVehicleUseCase para lanzar VehicleNotFoundException.
         // - Realiza la peticion GET simulada.
         UUID id = UUID.randomUUID();
-        when(getVehicleUseCase.getById(id)).thenThrow(new VehicleNotFoundException("No se encontro el vehiculo"));
+        when(getVehicleUseCase.getById(id)).thenThrow(new VehicleNotFoundException("ID", id));
 
         // QUE DEBERIA HACER:
         // Debe retornar estado 404 Not Found con el mensaje correspondiente en el cuerpo.
         mockMvc.perform(get("/v1/vehicles/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("No se encontro el vehiculo"));
+                .andExpect(content().string("Vehicle with 'ID = " + id + "' couldn't be found."));
 
         verify(getVehicleUseCase, times(1)).getById(id);
     }
@@ -180,14 +180,14 @@ class VehicleRestAdapterTest {
         // QUE HACE:
         // - Configura getVehicleUseCase para lanzar VehicleNotFoundException con la matricula "9999XYZ".
         // - Realiza la llamada GET a /v1/vehicles/plate/9999XYZ
-        when(getVehicleUseCase.getByPlate("9999XYZ")).thenThrow(new VehicleNotFoundException("No se encontro el vehiculo"));
+        when(getVehicleUseCase.getByPlate("9999XYZ")).thenThrow(new VehicleNotFoundException("plate", "9999XYZ"));
 
         // QUE DEBERIA HACER:
         // Debe retornar estado 404 Not Found con el mensaje de error.
         mockMvc.perform(get("/v1/vehicles/plate/9999XYZ")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("No se encontro el vehiculo"));
+                .andExpect(content().string("Vehicle with 'plate = 9999XYZ' couldn't be found."));
 
         verify(getVehicleUseCase, times(1)).getByPlate("9999XYZ");
     }
@@ -252,7 +252,7 @@ class VehicleRestAdapterTest {
 
         when(vehicleRestMapper.toCreateDTO(any(VehicleRequest.class))).thenReturn(createDTO);
         when(createVehicleUseCase.execute(createDTO))
-                .thenThrow(new InvalidVehicleException("Tipo de vehículo inválido: HELICOPTER"));
+                .thenThrow(new InvalidVehicleException("VehicleType", request.type));
 
         // QUE DEBERIA HACER:
         // La InvalidVehicleException que sube desde la aplicacion debe traducirse en un
@@ -261,7 +261,7 @@ class VehicleRestAdapterTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Tipo de vehículo inválido: HELICOPTER"));
+                .andExpect(content().string("Invalid vehicle data: VehicleType can't be HELICOPTER"));
 
         verify(createVehicleUseCase, times(1)).execute(createDTO);
     }

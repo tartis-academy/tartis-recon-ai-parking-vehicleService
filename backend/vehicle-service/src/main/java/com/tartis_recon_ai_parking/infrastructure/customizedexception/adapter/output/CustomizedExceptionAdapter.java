@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 
@@ -17,6 +19,11 @@ public class CustomizedExceptionAdapter {
 
     @ExceptionHandler(InvalidVehicleException.class)
     public ResponseEntity<String> handleInvalid(InvalidVehicleException ex) {
+        return ResponseEntity.badRequest().body(ex.getMessage());
+    }
+
+    @ExceptionHandler(ExistingVehicleException.class)
+    public ResponseEntity<String> handleExisting(ExistingVehicleException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
 }

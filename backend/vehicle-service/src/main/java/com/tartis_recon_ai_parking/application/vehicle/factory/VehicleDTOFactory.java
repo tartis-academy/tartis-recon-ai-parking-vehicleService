@@ -33,7 +33,7 @@ public final class VehicleDTOFactory {
 
     public static Vehicle toDomain(VehicleCreateDTO dto) {
         VehicleType type = parseType(dto.type());
-        return new Vehicle(
+        return Vehicle.create(
                 type,
                 dto.plate(),
                 dto.brand() != null ? dto.brand() : "Desconocido",
@@ -48,7 +48,7 @@ public final class VehicleDTOFactory {
         try {
             return VehicleType.valueOf(type);
         } catch (IllegalArgumentException | NullPointerException e) {
-            throw new InvalidVehicleException("Tipo de vehículo inválido: " + type);
+            throw new InvalidVehicleException("VehicleType", type);
         }
     }
 
