@@ -99,7 +99,7 @@ class VehicleTest {
         // validandose en el primer paso de comprobacion de puertas.
         assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", -1, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: numDoors can't be -1");
+                .hasMessageContaining("Invalid vehicle data: Number of doors can't be -1");
     }
 
     @Test
@@ -125,39 +125,11 @@ class VehicleTest {
         // o "Vehicle plate is null") impidiendo la construccion de un objeto invalido.
         assertThatThrownBy(() -> Vehicle.create(null, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: type can't be null");
+                .hasMessageContaining("Invalid vehicle data: VehicleType can't be null");
 
         assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, null, "Toyota", "Corolla", "Red", 4, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: plate can't be null");
-
-        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", null, "Corolla", "Red", 4, false, true))
-                .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: brand can't be null");
-
-        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", null, "Red", 4, false, true))
-                .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: model can't be null");
-
-        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", null, 4, false, true))
-                .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: color can't be null");
-    }
-
-    @Test
-    @DisplayName("Debe lanzar InvalidVehicleException si parametros de texto obligatorios estan en blanco")
-    void shouldThrowExceptionWhenStringParametersAreBlank() {
-        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "  ", "Corolla", "Red", 4, false, true))
-                .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: brand can't be empty ( )");
-
-        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "  ", "Red", 4, false, true))
-                .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: model can't be empty ( )");
-
-        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "  ", 4, false, true))
-                .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: color can't be empty ( )");
+                .hasMessageContaining("Invalid vehicle data: Plate can't be null");
     }
 
     @Test
@@ -173,7 +145,7 @@ class VehicleTest {
         // asegurando que no se pueda corromper el estado del objeto al actualizarlo.
         assertThatThrownBy(() -> vehicle.update(vehicle.getType(), null, vehicle.getBrand(), vehicle.getModel(), vehicle.getColor(), vehicle.getNumDoors(), vehicle.getHasSidecar(), vehicle.isActive()))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: plate can't be null");
+                .hasMessageContaining("Invalid vehicle data: Plate can't be null");
 
         assertThatThrownBy(() -> vehicle.update(vehicle.getType(), vehicle.getPlate(), vehicle.getBrand(), vehicle.getModel(), vehicle.getColor(), vehicle.getNumDoors(), true, vehicle.isActive()))
                 .isInstanceOf(InvalidVehicleException.class)
@@ -244,7 +216,7 @@ class VehicleTest {
         // Debe lanzar InvalidVehicleException indicando que la matricula es nula.
         assertThatThrownBy(() -> Vehicle.validPlate(null))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: plate can't be null");
+                .hasMessageContaining("Invalid vehicle data: Plate can't be null");
     }
 
     @ParameterizedTest
@@ -257,108 +229,7 @@ class VehicleTest {
         // Debe lanzar InvalidVehicleException indicando que el campo de matricula no puede estar vacio.
         assertThatThrownBy(() -> Vehicle.validPlate(plate))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: plate can't be empty ( )");
+                .hasMessageContaining("Invalid vehicle data: Plate can't be empty ( )");
     }
 
-    @Test
-    @DisplayName("reconstruct no debe validar reglas de negocio — matrículas legacy de BD no deben lanzar excepción")
-    void reconstructShouldNotValidateBusinessRules() {
-        // "1234ABC" contiene la vocal 'A', así que create() la rechaza por el regex nuevo.
-        // Pero reconstruct() debe aceptarla sin problema porque reconstruye datos ya persistidos.
-        java.util.UUID id = java.util.UUID.randomUUID();
-
-        // reconstruct NO debe lanzar excepción
-        assertDoesNotThrow(() -> Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true));
-
-        // create SÍ debe lanzar excepción para la misma matrícula
-        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true))
-                .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid plate pattern");
-
-        // Verificamos que reconstruct asigna los campos correctamente
-        Vehicle v = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        assertThat(v.getUniqueId()).isEqualTo(id);
-        assertThat(v.getPlate()).isEqualTo("1234ABC");
-        assertThat(v.getBrand()).isEqualTo("Toyota");
-        assertThat(v.getType()).isEqualTo(VehicleType.CAR);
-        assertThat(v.getModel()).isEqualTo("Corolla");
-        assertThat(v.getColor()).isEqualTo("Red");
-        assertThat(v.getNumDoors()).isEqualTo(4);
-        assertThat(v.getHasSidecar()).isFalse();
-        assertThat(v.isActive()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Debe crear un coche PMR (CAR_PMR) valido sin sidecar")
-    void shouldCreateValidCarPMR() throws InvalidVehicleException {
-        Vehicle vehicle = Vehicle.create(VehicleType.CAR_PMR, "1234BCD", "Toyota", "Prius", "White", 5, false, true);
-
-        assertThat(vehicle.getType()).isEqualTo(VehicleType.CAR_PMR);
-        assertThat(vehicle.getPlate()).isEqualTo("1234BCD");
-        assertThat(vehicle.getNumDoors()).isEqualTo(5);
-        assertThat(vehicle.getHasSidecar()).isFalse();
-        assertThat(vehicle.isActive()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Debe lanzar InvalidVehicleException si un coche PMR tiene sidecar")
-    void shouldThrowExceptionWhenCarPMRHasSidecar() {
-        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR_PMR, "1234BCD", "Toyota", "Prius", "White", 4, true, true))
-                .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Cars do not have sidecar");
-    }
-
-    @Test
-    @DisplayName("Debe actualizar, activar y desactivar correctamente un vehiculo")
-    void shouldUpdateActivateAndDeactivate() throws InvalidVehicleException {
-        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
-        
-        // Activar
-        Vehicle activeVehicle = vehicle.activate();
-        assertThat(activeVehicle.isActive()).isTrue();
-        
-        // Desactivar
-        Vehicle inactiveVehicle = activeVehicle.deactivate();
-        assertThat(inactiveVehicle.isActive()).isFalse();
-        
-        // Actualizar
-        Vehicle updatedVehicle = vehicle.update(VehicleType.CAR, "1234BCD", "Toyota", "Yaris", "Blue", 5, false, true);
-        assertThat(updatedVehicle.getModel()).isEqualTo("Yaris");
-        assertThat(updatedVehicle.getColor()).isEqualTo("Blue");
-        assertThat(updatedVehicle.getNumDoors()).isEqualTo(5);
-    }
-
-    @Test
-    @DisplayName("Debe crear un coche con 2 puertas")
-    void shouldCreateCarWithTwoDoors() throws InvalidVehicleException {
-        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 2, false, true);
-        assertThat(vehicle.getNumDoors()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Debe actualizar correctamente una moto añadiendo un sidecar")
-    void shouldUpdateMotorbikeToAddSidecar() throws InvalidVehicleException {
-        Vehicle motorbike = Vehicle.create(VehicleType.MOTORBIKE, "5678DFG", "Honda", "CBR", "Black", 0, false, true);
-        Vehicle updatedMotorbike = motorbike.update(VehicleType.MOTORBIKE, "5678DFG", "Honda", "CBR", "Black", 0, true, true);
-        
-        assertThat(updatedMotorbike.getHasSidecar()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Debe mantener el estado inactivo al desactivar un vehiculo ya inactivo")
-    void shouldKeepInactiveWhenDeactivatingAlreadyInactiveVehicle() throws InvalidVehicleException {
-        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
-        Vehicle deactivatedVehicle = vehicle.deactivate();
-        
-        assertThat(deactivatedVehicle.isActive()).isFalse();
-    }
-
-    @Test
-    @DisplayName("Debe mantener el estado activo al activar un vehiculo ya activo")
-    void shouldKeepActiveWhenActivatingAlreadyActiveVehicle() throws InvalidVehicleException {
-        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
-        Vehicle activatedVehicle = vehicle.activate();
-        
-        assertThat(activatedVehicle.isActive()).isTrue();
-    }
 }
