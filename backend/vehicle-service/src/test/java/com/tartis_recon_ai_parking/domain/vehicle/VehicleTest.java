@@ -130,6 +130,34 @@ class VehicleTest {
         assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, null, "Toyota", "Corolla", "Red", 4, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Invalid vehicle data: Plate can't be null");
+                
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", null, "Corolla", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Brand can't be null");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", null, "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Model can't be null");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", null, 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Color can't be null");
+    }
+
+    @Test
+    @DisplayName("Debe lanzar InvalidVehicleException si parametros de texto obligatorios estan en blanco")
+    void shouldThrowExceptionWhenStringParametersAreBlank() {
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "  ", "Corolla", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Brand can't be empty ( )");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "  ", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Model can't be empty ( )");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "  ", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Color can't be empty ( )");
     }
 
     @Test

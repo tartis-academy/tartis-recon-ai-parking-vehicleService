@@ -53,13 +53,13 @@ public class VehicleRestAdapter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VehicleResponse> getVehicleById(@PathVariable UUID id) throws VehicleNotFoundException {
+    public ResponseEntity<VehicleResponse> getVehicleById(@PathVariable UUID id) {
         VehicleDTO vehicle = getVehicleUseCase.getById(id);
         return ResponseEntity.ok(mapper.toResponse(vehicle));
     }
 
     @GetMapping("/plate/{plate}")
-    public ResponseEntity<VehicleResponse> getByPlate(@PathVariable String plate) throws VehicleNotFoundException {
+    public ResponseEntity<VehicleResponse> getByPlate(@PathVariable String plate) {
         VehicleDTO vehicle = getVehicleUseCase.getByPlate(plate);
         return ResponseEntity.ok(mapper.toResponse(vehicle));
     }
@@ -78,14 +78,14 @@ public class VehicleRestAdapter {
      * 404 Not Found  -> no existe vehiculo con ese id (VehicleNotFoundException)
      */
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> deactivateVehicle(@PathVariable UUID id) throws VehicleNotFoundException {
+    public ResponseEntity<Void> deactivateVehicle(@PathVariable UUID id) {
         deleteVehicleUseCase.deactivate(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<VehicleResponse> updateVehicle(@PathVariable UUID id,
-                                                         @Valid @RequestBody VehicleRequest request) throws VehicleNotFoundException, ExistingVehicleException {
+                                                         @Valid @RequestBody VehicleRequest request) {
         VehicleDTO updatedVehicle = updateVehicleUseCase.execute(id, mapper.toCreateDTO(request));
         return ResponseEntity.ok(mapper.toResponse(updatedVehicle));
     }

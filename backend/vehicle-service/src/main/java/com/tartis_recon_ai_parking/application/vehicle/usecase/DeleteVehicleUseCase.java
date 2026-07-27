@@ -19,7 +19,7 @@ public class DeleteVehicleUseCase {
      * @param id identificador unico del vehiculo
      * @throws VehicleNotFoundException si no existe ningun vehiculo con ese id (CA7)
      */
-    public void deactivate(UUID id) throws VehicleNotFoundException {
+    public void deactivate(UUID id) {
 
         // 1. Recuperamos el vehiculo a traves del puerto de salida.
         Vehicle vehicle = persistence.findById(id)

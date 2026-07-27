@@ -23,8 +23,7 @@ public class UpdateVehicleUseCase {
      * El id llega como parametro y no dentro del DTO: identifica el recurso de la
      * URL, no es un dato que el cliente pueda modificar en el cuerpo.
      */
-    public VehicleDTO execute(UUID id, VehicleCreateDTO updatedData)
-            throws VehicleNotFoundException, InvalidVehicleException {
+    public VehicleDTO execute(UUID id, VehicleCreateDTO updatedData) {
 
         // 1. Validamos los datos entrantes ANTES de ir a la BD: si el cuerpo es
         //    invalido debe ganar ese error, no el 404 de un id inexistente.
