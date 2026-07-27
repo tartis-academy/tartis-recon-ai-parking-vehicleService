@@ -281,6 +281,31 @@ class VehicleTest {
         assertThat(v.getPlate()).isEqualTo("1234ABC");
         assertThat(v.getBrand()).isEqualTo("Toyota");
         assertThat(v.getType()).isEqualTo(VehicleType.CAR);
+        assertThat(v.getModel()).isEqualTo("Corolla");
+        assertThat(v.getColor()).isEqualTo("Red");
+        assertThat(v.getNumDoors()).isEqualTo(4);
+        assertThat(v.getHasSidecar()).isFalse();
+        assertThat(v.isActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Debe crear un coche PMR (CAR_PMR) valido sin sidecar")
+    void shouldCreateValidCarPMR() throws InvalidVehicleException {
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR_PMR, "1234BCD", "Toyota", "Prius", "White", 5, false, true);
+
+        assertThat(vehicle.getType()).isEqualTo(VehicleType.CAR_PMR);
+        assertThat(vehicle.getPlate()).isEqualTo("1234BCD");
+        assertThat(vehicle.getNumDoors()).isEqualTo(5);
+        assertThat(vehicle.getHasSidecar()).isFalse();
+        assertThat(vehicle.isActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Debe lanzar InvalidVehicleException si un coche PMR tiene sidecar")
+    void shouldThrowExceptionWhenCarPMRHasSidecar() {
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR_PMR, "1234BCD", "Toyota", "Prius", "White", 4, true, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Cars do not have sidecar");
     }
 
     @Test
@@ -308,5 +333,32 @@ class VehicleTest {
     void shouldCreateCarWithTwoDoors() throws InvalidVehicleException {
         Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 2, false, true);
         assertThat(vehicle.getNumDoors()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Debe actualizar correctamente una moto añadiendo un sidecar")
+    void shouldUpdateMotorbikeToAddSidecar() throws InvalidVehicleException {
+        Vehicle motorbike = Vehicle.create(VehicleType.MOTORBIKE, "5678DFG", "Honda", "CBR", "Black", 0, false, true);
+        Vehicle updatedMotorbike = motorbike.update(VehicleType.MOTORBIKE, "5678DFG", "Honda", "CBR", "Black", 0, true, true);
+        
+        assertThat(updatedMotorbike.getHasSidecar()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Debe mantener el estado inactivo al desactivar un vehiculo ya inactivo")
+    void shouldKeepInactiveWhenDeactivatingAlreadyInactiveVehicle() throws InvalidVehicleException {
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
+        Vehicle deactivatedVehicle = vehicle.deactivate();
+        
+        assertThat(deactivatedVehicle.isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Debe mantener el estado activo al activar un vehiculo ya activo")
+    void shouldKeepActiveWhenActivatingAlreadyActiveVehicle() throws InvalidVehicleException {
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle activatedVehicle = vehicle.activate();
+        
+        assertThat(activatedVehicle.isActive()).isTrue();
     }
 }
