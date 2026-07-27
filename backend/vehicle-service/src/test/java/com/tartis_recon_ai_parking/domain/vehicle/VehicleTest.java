@@ -133,6 +133,22 @@ class VehicleTest {
     }
 
     @Test
+    @DisplayName("Debe lanzar InvalidVehicleException si parametros de texto obligatorios estan en blanco")
+    void shouldThrowExceptionWhenStringParametersAreBlank() {
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "  ", "Corolla", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: brand can't be empty ( )");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "  ", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: model can't be empty ( )");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "  ", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: color can't be empty ( )");
+    }
+
+    @Test
     @DisplayName("Debe lanzar InvalidVehicleException si el setter recibe valores nulos o invalidos")
     void shouldValidateSetters() throws InvalidVehicleException {
         // QUE HACE: 
@@ -255,4 +271,30 @@ class VehicleTest {
         assertThat(v.getType()).isEqualTo(VehicleType.CAR);
     }
 
+    @Test
+    @DisplayName("Debe actualizar, activar y desactivar correctamente un vehiculo")
+    void shouldUpdateActivateAndDeactivate() throws InvalidVehicleException {
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
+        
+        // Activar
+        Vehicle activeVehicle = vehicle.activate();
+        assertThat(activeVehicle.isActive()).isTrue();
+        
+        // Desactivar
+        Vehicle inactiveVehicle = activeVehicle.deactivate();
+        assertThat(inactiveVehicle.isActive()).isFalse();
+        
+        // Actualizar
+        Vehicle updatedVehicle = vehicle.update(VehicleType.CAR, "1234BCD", "Toyota", "Yaris", "Blue", 5, false, true);
+        assertThat(updatedVehicle.getModel()).isEqualTo("Yaris");
+        assertThat(updatedVehicle.getColor()).isEqualTo("Blue");
+        assertThat(updatedVehicle.getNumDoors()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Debe crear un coche con 2 puertas")
+    void shouldCreateCarWithTwoDoors() throws InvalidVehicleException {
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 2, false, true);
+        assertThat(vehicle.getNumDoors()).isEqualTo(2);
+    }
 }

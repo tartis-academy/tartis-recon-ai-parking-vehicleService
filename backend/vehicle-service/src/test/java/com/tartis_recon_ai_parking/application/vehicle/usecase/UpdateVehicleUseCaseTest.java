@@ -55,6 +55,7 @@ class UpdateVehicleUseCaseTest {
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(existingVehicle));
+        when(vehiclePersistence.findByPlate("1234BCD")).thenReturn(Optional.of(existingVehicle));
         when(vehiclePersistence.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         VehicleDTO result = updateVehicleUseCase.execute(id, updatedData);
@@ -93,6 +94,26 @@ class UpdateVehicleUseCaseTest {
     }
 
     @Test
+    @DisplayName("Debe lanzar InvalidVehicleException si la nueva matricula pertenece a otro vehiculo")
+    void shouldThrowExceptionWhenPlateBelongsToAnotherVehicle() {
+        UUID id = UUID.randomUUID();
+        UUID otherId = UUID.randomUUID();
+        Vehicle existingVehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle otherVehicle = Vehicle.reconstruct(otherId, VehicleType.CAR, "9999XYZ", "Seat", "Ibiza", "Blue", 4, false, true);
+
+        VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "9999XYZ", "Toyota", "Corolla", "Blue", 4, false);
+
+        when(vehiclePersistence.findById(id)).thenReturn(Optional.of(existingVehicle));
+        when(vehiclePersistence.findByPlate("9999XYZ")).thenReturn(Optional.of(otherVehicle));
+
+        assertThatThrownBy(() -> updateVehicleUseCase.execute(id, updatedData))
+                .isInstanceOf(com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException.class)
+                .hasMessageContaining("9999XYZ");
+
+        verify(vehiclePersistence, never()).save(any(Vehicle.class));
+    }
+
+    @Test
     @DisplayName("Debe lanzar InvalidVehicleException sin consultar la BD si el tipo del DTO no es valido")
     void shouldThrowExceptionWhenTypeIsInvalid() {
         // QUE HACE:
@@ -112,23 +133,5 @@ class UpdateVehicleUseCaseTest {
         verify(vehiclePersistence, never()).save(any(Vehicle.class));
     }
 
-    @Test
-    @DisplayName("Debe lanzar ExistingVehicleException si la nueva matrícula ya pertenece a otro vehículo")
-    void shouldThrowExceptionWhenPlateBelongsToAnotherVehicle() {
-        UUID id = UUID.randomUUID();
-        UUID otherId = UUID.randomUUID();
-        Vehicle existingVehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
-        Vehicle otherVehicle = Vehicle.reconstruct(otherId, VehicleType.CAR, "5678DFG", "Honda", "Civic", "Blue", 4, false, true);
 
-        VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "5678DFG", "Toyota", "Corolla", "Blue", 4, false);
-
-        when(vehiclePersistence.findById(id)).thenReturn(Optional.of(existingVehicle));
-        when(vehiclePersistence.findByPlate("5678DFG")).thenReturn(Optional.of(otherVehicle));
-
-        assertThatThrownBy(() -> updateVehicleUseCase.execute(id, updatedData))
-                .isInstanceOf(com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException.class)
-                .hasMessageContaining("5678DFG");
-
-        verify(vehiclePersistence, never()).save(any(Vehicle.class));
-    }
 }
