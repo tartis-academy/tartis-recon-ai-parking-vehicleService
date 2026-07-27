@@ -23,8 +23,21 @@ public class Vehicle{
 
     public static Vehicle reconstruct(UUID id, VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSidecar, boolean active){
-            return new Vehicle(id, type, plate, brand, model, color, numDoors, hasSidecar, active);
+            Vehicle v = new Vehicle();
+            v.uniqueId = id;
+            v.type = type;
+            v.plate = plate;
+            v.brand = brand;
+            v.model = model;
+            v.color = color;
+            v.numDoors = numDoors;
+            v.hasSidecar = hasSidecar;
+            v.active = active;
+            return v;
     }
+
+    //Constructor privado sin argumentos, solo para uso interno de reconstruct
+    private Vehicle(){}
 
     //Vehicle constructor
     private Vehicle(UUID id, VehicleType type, String plate, String brand, String model, String color,
@@ -46,32 +59,32 @@ public class Vehicle{
 
     private void validateData(VehicleType type, String plate, String brand, String model, String color, int numDoors, boolean hasSidecar){
 
-        if(type == null) throw new InvalidVehicleException("VehicleType", null);
+        if(type == null) throw new InvalidVehicleException("type", null);
         if(type != VehicleType.MOTORBIKE && hasSidecar) throw new InvalidVehicleException("hasSideCar",true,"Cars do not have sidecar");
 
         //Cars can only have 2 or 4 doors.
         //Bikes cannot have doors. 
-        if(numDoors < 0) throw new InvalidVehicleException("Number of doors", numDoors);
+        if(numDoors < 0) throw new InvalidVehicleException("numDoors", numDoors);
         if(type != VehicleType.MOTORBIKE && !(numDoors == 2 || numDoors == 4 || numDoors == 5)) 
-            throw new InvalidVehicleException("Number of doors", numDoors,"Incorrect number of doors for a car");
-        if(type == VehicleType.MOTORBIKE && numDoors > 0) throw new InvalidVehicleException("Number of doors", numDoors, "Incorrect number of doors for a motorbike");
+            throw new InvalidVehicleException("numDoors", numDoors,"Incorrect number of doors for a car");
+        if(type == VehicleType.MOTORBIKE && numDoors > 0) throw new InvalidVehicleException("numDoors", numDoors, "Incorrect number of doors for a motorbike");
 
-        if(brand == null) throw new InvalidVehicleException("Brand", null);
-        if(model == null) throw new InvalidVehicleException("Model", null);
-        if(color == null) throw new InvalidVehicleException("Color", null);
+        if(brand == null) throw new InvalidVehicleException("brand", null);
+        if(model == null) throw new InvalidVehicleException("model", null);
+        if(color == null) throw new InvalidVehicleException("color", null);
 
         validPlate(plate);
 
-        if(brand.isBlank()) throw new InvalidVehicleException("Brand", "empty ( )");
-        if(model.isBlank()) throw new InvalidVehicleException("Model", "empty ( )");
-        if(color.isBlank()) throw new InvalidVehicleException("Color", "empty ( )");
+        if(brand.isBlank()) throw new InvalidVehicleException("brand", "empty ( )");
+        if(model.isBlank()) throw new InvalidVehicleException("model", "empty ( )");
+        if(color.isBlank()) throw new InvalidVehicleException("color", "empty ( )");
    
     }
 
     public static void validPlate(String plate) {
 
-        if(plate == null) throw new InvalidVehicleException("Plate", null);
-        if(plate.isBlank()) throw new InvalidVehicleException("Plate", "empty ( )");
+        if(plate == null) throw new InvalidVehicleException("plate", null);
+        if(plate.isBlank()) throw new InvalidVehicleException("plate", "empty ( )");
 
         // Formato moderno (2000-actualidad): 4 digitos seguidos de 3 consonantes
         // Las letras validas son consonantes excluyendo Ñ y Q
@@ -82,7 +95,7 @@ public class Vehicle{
 
         //Lanza excepción si no cumple ninguno de los dos formatos.
         if (!plate.matches(modernPattern) && !plate.matches(oldPattern)) 
-            throw new InvalidVehicleException("Plate", plate, "Invalid plate pattern: " + plate);
+            throw new InvalidVehicleException("plate", plate, "Invalid plate pattern: " + plate);
 
     }
 
