@@ -98,4 +98,12 @@ class VehiclePersistenceMapperTest {
         // El mapper debe retornar null de forma segura y sin lanzar excepciones.
         assertThat(vehicle).isNull();
     }
+
+    @Test
+    @DisplayName("El ObjectFactory reconstruct debe retornar null de forma segura ante una entidad nula")
+    void shouldReturnNullWhenReconstructingNullEntity() {
+        Vehicle vehicle = mapper.reconstruct(null);
+
+        assertThat(vehicle).isNull();
+    }
 }

@@ -144,7 +144,7 @@ class VehicleRestAdapterTest {
         mockMvc.perform(get("/v1/vehicles/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Vehicle with 'ID = " + id + "' couldn't be found."));
+                .andExpect(jsonPath("$.detail").value("Vehicle with 'ID = " + id + "' couldn't be found."));
 
         verify(getVehicleUseCase, times(1)).getById(id);
     }
@@ -187,7 +187,7 @@ class VehicleRestAdapterTest {
         mockMvc.perform(get("/v1/vehicles/plate/9999XYZ")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Vehicle with 'plate = 9999XYZ' couldn't be found."));
+                .andExpect(jsonPath("$.detail").value("Vehicle with 'plate = 9999XYZ' couldn't be found."));
 
         verify(getVehicleUseCase, times(1)).getByPlate("9999XYZ");
     }
@@ -261,7 +261,7 @@ class VehicleRestAdapterTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Invalid vehicle data: VehicleType can't be HELICOPTER"));
+                .andExpect(jsonPath("$.detail").value("Invalid vehicle data: VehicleType can't be HELICOPTER"));
 
         verify(createVehicleUseCase, times(1)).execute(createDTO);
     }
