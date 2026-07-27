@@ -148,4 +148,28 @@ class VehicleTest {
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Cars do not have sidecar");
     }
+
+    @Test
+    @DisplayName("activate() debe devolver el vehiculo con active=true conservando el resto de datos")
+    void shouldActivateVehicle() throws InvalidVehicleException {
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, false);
+
+        Vehicle activated = vehicle.activate();
+
+        assertThat(activated.isActive()).isTrue();
+        assertThat(activated.getPlate()).isEqualTo("1234ABC");
+        assertThat(activated.getUniqueId()).isEqualTo(vehicle.getUniqueId());
+    }
+
+    @Test
+    @DisplayName("deactivate() debe devolver el vehiculo con active=false conservando el resto de datos")
+    void shouldDeactivateVehicle() throws InvalidVehicleException {
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+
+        Vehicle deactivated = vehicle.deactivate();
+
+        assertThat(deactivated.isActive()).isFalse();
+        assertThat(deactivated.getPlate()).isEqualTo("1234ABC");
+        assertThat(deactivated.getUniqueId()).isEqualTo(vehicle.getUniqueId());
+    }
 }

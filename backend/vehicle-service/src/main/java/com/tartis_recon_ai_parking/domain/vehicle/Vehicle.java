@@ -68,12 +68,12 @@ public class Vehicle{
     }
 
     public Vehicle activate(){
-        return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model, 
+        return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model,
             this.color, this.numDoors, this.hasSidecar, true);
     }
 
     public Vehicle deactivate(){
-        return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model, 
+        return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model,
             this.color, this.numDoors, this.hasSidecar, false);
     }
 
