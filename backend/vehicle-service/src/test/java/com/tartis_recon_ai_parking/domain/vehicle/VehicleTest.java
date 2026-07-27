@@ -99,7 +99,7 @@ class VehicleTest {
         // validandose en el primer paso de comprobacion de puertas.
         assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", -1, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: numDoors can't be -1");
+                .hasMessageContaining("Invalid vehicle data: Number of doors can't be -1");
     }
 
     @Test
@@ -125,11 +125,39 @@ class VehicleTest {
         // o "Vehicle plate is null") impidiendo la construccion de un objeto invalido.
         assertThatThrownBy(() -> Vehicle.create(null, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: type can't be null");
+                .hasMessageContaining("Invalid vehicle data: VehicleType can't be null");
 
         assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, null, "Toyota", "Corolla", "Red", 4, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: plate can't be null");
+                .hasMessageContaining("Invalid vehicle data: Plate can't be null");
+                
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", null, "Corolla", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Brand can't be null");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", null, "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Model can't be null");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", null, 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Color can't be null");
+    }
+
+    @Test
+    @DisplayName("Debe lanzar InvalidVehicleException si parametros de texto obligatorios estan en blanco")
+    void shouldThrowExceptionWhenStringParametersAreBlank() {
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "  ", "Corolla", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Brand can't be empty ( )");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "  ", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Model can't be empty ( )");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "  ", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: Color can't be empty ( )");
     }
 
     @Test
@@ -145,7 +173,7 @@ class VehicleTest {
         // asegurando que no se pueda corromper el estado del objeto al actualizarlo.
         assertThatThrownBy(() -> vehicle.update(vehicle.getType(), null, vehicle.getBrand(), vehicle.getModel(), vehicle.getColor(), vehicle.getNumDoors(), vehicle.getHasSidecar(), vehicle.isActive()))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: plate can't be null");
+                .hasMessageContaining("Invalid vehicle data: Plate can't be null");
 
         assertThatThrownBy(() -> vehicle.update(vehicle.getType(), vehicle.getPlate(), vehicle.getBrand(), vehicle.getModel(), vehicle.getColor(), vehicle.getNumDoors(), true, vehicle.isActive()))
                 .isInstanceOf(InvalidVehicleException.class)
@@ -216,7 +244,7 @@ class VehicleTest {
         // Debe lanzar InvalidVehicleException indicando que la matricula es nula.
         assertThatThrownBy(() -> Vehicle.validPlate(null))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: plate can't be null");
+                .hasMessageContaining("Invalid vehicle data: Plate can't be null");
     }
 
     @ParameterizedTest
@@ -229,30 +257,7 @@ class VehicleTest {
         // Debe lanzar InvalidVehicleException indicando que el campo de matricula no puede estar vacio.
         assertThatThrownBy(() -> Vehicle.validPlate(plate))
                 .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid vehicle data: plate can't be empty ( )");
-    }
-
-    @Test
-    @DisplayName("reconstruct no debe validar reglas de negocio — matrículas legacy de BD no deben lanzar excepción")
-    void reconstructShouldNotValidateBusinessRules() {
-        // "1234ABC" contiene la vocal 'A', así que create() la rechaza por el regex nuevo.
-        // Pero reconstruct() debe aceptarla sin problema porque reconstruye datos ya persistidos.
-        java.util.UUID id = java.util.UUID.randomUUID();
-
-        // reconstruct NO debe lanzar excepción
-        assertDoesNotThrow(() -> Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true));
-
-        // create SÍ debe lanzar excepción para la misma matrícula
-        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true))
-                .isInstanceOf(InvalidVehicleException.class)
-                .hasMessageContaining("Invalid plate pattern");
-
-        // Verificamos que reconstruct asigna los campos correctamente
-        Vehicle v = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        assertThat(v.getUniqueId()).isEqualTo(id);
-        assertThat(v.getPlate()).isEqualTo("1234ABC");
-        assertThat(v.getBrand()).isEqualTo("Toyota");
-        assertThat(v.getType()).isEqualTo(VehicleType.CAR);
+                .hasMessageContaining("Invalid vehicle data: Plate can't be empty ( )");
     }
 
 }

@@ -76,6 +76,13 @@ class VehicleRestMapperTest {
     }
 
     @Test
+    @DisplayName("Debe retornar null al mapear un request nulo a VehicleCreateDTO")
+    void shouldReturnNullWhenMappingNullRequest() {
+        VehicleCreateDTO createDTO = mapper.toCreateDTO(null);
+        assertThat(createDTO).isNull();
+    }
+
+    @Test
     @DisplayName("Debe retornar null al mapear un vehiculo nulo")
     void shouldReturnNullWhenMappingNullVehicle() {
         // QUE HACE:
