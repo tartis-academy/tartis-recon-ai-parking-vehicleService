@@ -59,7 +59,6 @@ class VehicleRestMapperTest {
         request.color = "Red";
         request.numDoors = 4;
         request.hasSidecar = false;
-        request.active = true;
 
         VehicleCreateDTO createDTO = mapper.toCreateDTO(request);
 
@@ -74,7 +73,6 @@ class VehicleRestMapperTest {
         assertThat(createDTO.color()).isEqualTo("Red");
         assertThat(createDTO.numDoors()).isEqualTo(4);
         assertThat(createDTO.hasSidecar()).isFalse();
-        assertThat(createDTO.active()).isTrue();
     }
 
     @Test

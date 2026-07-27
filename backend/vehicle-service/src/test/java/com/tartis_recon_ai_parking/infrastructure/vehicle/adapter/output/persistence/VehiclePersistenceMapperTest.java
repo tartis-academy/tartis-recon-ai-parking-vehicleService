@@ -22,8 +22,7 @@ class VehiclePersistenceMapperTest {
         // QUE HACE:
         // Instancia un objeto Vehicle de dominio completo con datos especificos, llama al metodo toEntity del mapeador.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle.setUniqueId(id);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         VehicleEntity entity = mapper.toEntity(vehicle);
 
@@ -97,6 +96,14 @@ class VehiclePersistenceMapperTest {
 
         // QUE DEBERIA HACER:
         // El mapper debe retornar null de forma segura y sin lanzar excepciones.
+        assertThat(vehicle).isNull();
+    }
+
+    @Test
+    @DisplayName("El ObjectFactory reconstruct debe retornar null de forma segura ante una entidad nula")
+    void shouldReturnNullWhenReconstructingNullEntity() {
+        Vehicle vehicle = mapper.reconstruct(null);
+
         assertThat(vehicle).isNull();
     }
 }

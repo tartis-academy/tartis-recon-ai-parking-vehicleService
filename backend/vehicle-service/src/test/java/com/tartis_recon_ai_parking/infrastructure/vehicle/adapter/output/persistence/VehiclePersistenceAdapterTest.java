@@ -41,8 +41,7 @@ class VehiclePersistenceAdapterTest {
         // - Configura los mocks del mapper y del repositorio.
         // - Ejecuta el metodo save del adaptador.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle.setUniqueId(id);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
@@ -76,8 +75,7 @@ class VehiclePersistenceAdapterTest {
         entity.setUniqueId(id);
         entity.setPlate("1234ABC");
         
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle.setUniqueId(id);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         when(vehicleRepository.findByPlate("1234ABC")).thenReturn(Optional.of(entity));
         when(vehiclePersistenceMapper.toDomain(entity)).thenReturn(vehicle);
@@ -121,8 +119,7 @@ class VehiclePersistenceAdapterTest {
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
 
-        Vehicle vehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        vehicle.setUniqueId(id);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         when(vehicleRepository.findById(id)).thenReturn(Optional.of(entity));
         when(vehiclePersistenceMapper.toDomain(entity)).thenReturn(vehicle);
@@ -164,8 +161,8 @@ class VehiclePersistenceAdapterTest {
         VehicleEntity entity2 = new VehicleEntity();
         entity2.setPlate("5678DEF");
 
-        Vehicle domain1 = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        Vehicle domain2 = new Vehicle(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, true, true);
+        Vehicle domain1 = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle domain2 = Vehicle.create(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, true, true);
 
         when(vehicleRepository.findAll()).thenReturn(List.of(entity1, entity2));
         when(vehiclePersistenceMapper.toDomain(entity1)).thenReturn(domain1);

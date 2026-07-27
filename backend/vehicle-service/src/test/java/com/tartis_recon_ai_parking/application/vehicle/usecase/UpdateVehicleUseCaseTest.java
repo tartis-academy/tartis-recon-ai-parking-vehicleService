@@ -1,5 +1,6 @@
 package com.tartis_recon_ai_parking.application.vehicle.usecase;
 
+
 import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleCreateDTO;
 import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
@@ -40,16 +41,17 @@ class UpdateVehicleUseCaseTest {
     @DisplayName("Debe actualizar los datos de un vehiculo existente")
     void shouldUpdateVehicleSuccessfully() throws InvalidVehicleException, VehicleNotFoundException {
         // QUE HACE:
-        // 1. Genera un ID comun y crea una entidad simulada existente en base de datos.
-        // 2. Crea el DTO con los nuevos datos actualizados (color cambiado a Blue y estado a inactivo).
+        // 1. Genera un ID comun y crea una entidad simulada existente en base de datos, ya
+        //    desactivada (active = false), para comprobar que el update no la reactiva.
+        // 2. Crea el DTO con los nuevos datos actualizados (color cambiado a Blue).
         //    El id ya no viaja en el DTO: se pasa como parametro porque identifica el recurso.
         // 3. Configura el mock para retornar la entidad existente al buscar por ID.
         // 4. Configura el mock para retornar el objeto guardado al llamar a save().
         UUID id = UUID.randomUUID();
-        Vehicle existingVehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        existingVehicle.setUniqueId(id);
+        // Parte desactivada (active = false) para comprobar que el update no la reactiva.
+        Vehicle existingVehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, false);
 
-        VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Blue", 4, false, false);
+        VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Blue", 4, false);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(existingVehicle));
@@ -60,11 +62,12 @@ class UpdateVehicleUseCaseTest {
         // QUE DEBERIA HACER:
         // Debe mutar los atributos del vehiculo existente con los nuevos valores,
         // guardarlo en base de datos y retornar el DTO con los valores actualizados
-        // (color "Blue" y activo a false), conservando el id del recurso.
+        // (color "Blue"), conservando el id del recurso y el estado 'active' previo:
+        // el PUT no toca 'active', solo lo hace PATCH /{id}/status.
         assertThat(result.color()).isEqualTo("Blue");
         assertThat(result.active()).isFalse();
         assertThat(result.uniqueId()).isEqualTo(id);
-        verify(vehiclePersistence, times(1)).save(existingVehicle);
+        verify(vehiclePersistence, times(1)).save(any(Vehicle.class));
     }
 
     @Test
@@ -75,7 +78,7 @@ class UpdateVehicleUseCaseTest {
         // 2. Configura el mock para simular que no se encuentra ningun vehiculo con ese ID (Optional.empty()).
         // 3. Intenta ejecutar el caso de uso de actualizacion.
         UUID id = UUID.randomUUID();
-        VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Blue", 4, false, false);
+        VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Blue", 4, false);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.empty());
@@ -90,13 +93,33 @@ class UpdateVehicleUseCaseTest {
     }
 
     @Test
+    @DisplayName("Debe lanzar InvalidVehicleException si la nueva matricula pertenece a otro vehiculo")
+    void shouldThrowExceptionWhenPlateBelongsToAnotherVehicle() {
+        UUID id = UUID.randomUUID();
+        UUID otherId = UUID.randomUUID();
+        Vehicle existingVehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle otherVehicle = Vehicle.reconstruct(otherId, VehicleType.CAR, "9999XYZ", "Seat", "Ibiza", "Blue", 4, false, true);
+
+        VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "9999XYZ", "Toyota", "Corolla", "Blue", 4, false);
+
+        when(vehiclePersistence.findById(id)).thenReturn(Optional.of(existingVehicle));
+        when(vehiclePersistence.findByPlate("9999XYZ")).thenReturn(Optional.of(otherVehicle));
+
+        assertThatThrownBy(() -> updateVehicleUseCase.execute(id, updatedData))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Ya existe un vehículo con la matrícula: 9999XYZ");
+
+        verify(vehiclePersistence, never()).save(any(Vehicle.class));
+    }
+
+    @Test
     @DisplayName("Debe lanzar InvalidVehicleException sin consultar la BD si el tipo del DTO no es valido")
     void shouldThrowExceptionWhenTypeIsInvalid() {
         // QUE HACE:
         // 1. Crea un DTO con un tipo inexistente en VehicleType.
         // 2. Ejecuta el caso de uso sin configurar findById.
         UUID id = UUID.randomUUID();
-        VehicleCreateDTO updatedData = new VehicleCreateDTO("HELICOPTER", "1234ABC", "Toyota", "Corolla", "Blue", 4, false, false);
+        VehicleCreateDTO updatedData = new VehicleCreateDTO("HELICOPTER", "1234ABC", "Toyota", "Corolla", "Blue", 4, false);
 
         // QUE DEBERIA HACER:
         // El cuerpo invalido debe ganar al 404: se valida antes de ir a buscar el vehiculo,

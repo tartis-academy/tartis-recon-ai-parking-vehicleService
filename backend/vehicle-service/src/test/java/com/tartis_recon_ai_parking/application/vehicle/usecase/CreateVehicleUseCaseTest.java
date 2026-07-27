@@ -48,8 +48,8 @@ class CreateVehicleUseCaseTest {
         //    la matricula "1234ABC" NO existe previamente (existsByPlate -> false).
         // 3. Configura el mock para que 'save' devuelva el vehiculo de dominio ya persistido.
         // 4. Ejecuta el caso de uso con el DTO.
-        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        Vehicle savedVehicle = new Vehicle(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false);
+        Vehicle savedVehicle = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.existsByPlate("1234ABC")).thenReturn(false);
@@ -78,7 +78,7 @@ class CreateVehicleUseCaseTest {
         // 2. Configura el mock 'vehiclePersistence' para simular que la matricula
         //    "1234ABC" SI existe previamente (existsByPlate -> true).
         // 3. Ejecuta el caso de uso con el DTO.
-        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.existsByPlate("1234ABC")).thenReturn(true);
@@ -101,7 +101,7 @@ class CreateVehicleUseCaseTest {
         // 1. Instancia un DTO con un tipo que no existe en VehicleType.
         // 2. Ejecuta el caso de uso sin configurar ningun mock: la conversion del DTO al
         //    dominio ocurre antes de tocar la persistencia.
-        VehicleCreateDTO createDTO = new VehicleCreateDTO("HELICOPTER", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("HELICOPTER", "1234ABC", "Toyota", "Corolla", "Red", 4, false);
 
         // QUE DEBERIA HACER:
         // Debe fallar al traducir el DTO al dominio y no llegar a consultar la matricula

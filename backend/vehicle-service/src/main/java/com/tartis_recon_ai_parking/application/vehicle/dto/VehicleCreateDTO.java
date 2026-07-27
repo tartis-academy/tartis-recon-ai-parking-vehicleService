@@ -7,6 +7,5 @@ public record VehicleCreateDTO(
         String model,
         String color,
         Integer numDoors,
-        Boolean hasSidecar,
-        Boolean active) {
+        Boolean hasSidecar) {
 }
