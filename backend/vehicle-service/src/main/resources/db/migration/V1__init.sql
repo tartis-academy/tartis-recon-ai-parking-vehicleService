@@ -1,8 +1,7 @@
--- DDL para el perfil prod (ddl-auto=validate): sin Flyway/Liquibase todavia,
--- el esquema se crea fuera de banda. Debe reflejar exactamente VehicleEntity.
--- Se monta como init script en la Postgres dedicada de vehicle-service.
-
-CREATE TABLE IF NOT EXISTS vehicles (
+-- RECON-812: migracion baseline de Flyway, sustituye al schema.sql que se
+-- montaba como init script de Postgres. Debe reflejar exactamente
+-- VehicleEntity.
+CREATE TABLE vehicles (
     unique_id   UUID PRIMARY KEY,
     type        VARCHAR(20) NOT NULL,
     plate       VARCHAR(255) NOT NULL UNIQUE,
