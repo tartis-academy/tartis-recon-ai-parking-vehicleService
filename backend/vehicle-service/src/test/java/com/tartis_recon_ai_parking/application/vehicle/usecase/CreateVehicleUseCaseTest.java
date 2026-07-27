@@ -114,4 +114,38 @@ class CreateVehicleUseCaseTest {
         verify(vehiclePersistence, never()).existsByPlate(anyString());
         verify(vehiclePersistence, never()).save(any(Vehicle.class));
     }
+
+    @Test
+    @DisplayName("Debe aplicar valores por defecto cuando los campos opcionales del DTO son null")
+    void shouldApplyDefaultsWhenOptionalFieldsAreNull() {
+        // brand, model, color, numDoors, hasSidecar son null -> VehicleDTOFactory asigna defaults
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234BCD", null, null, null, null, null);
+        Vehicle savedVehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Desconocido", "Desconocido", "Desconocido", 4, false, true);
+
+        when(vehiclePersistence.existsByPlate("1234BCD")).thenReturn(false);
+        when(vehiclePersistence.save(any(Vehicle.class))).thenReturn(savedVehicle);
+
+        VehicleDTO result = createVehicleUseCase.execute(createDTO);
+
+        assertThat(result.brand()).isEqualTo("Desconocido");
+        assertThat(result.model()).isEqualTo("Desconocido");
+        assertThat(result.color()).isEqualTo("Desconocido");
+        assertThat(result.numDoors()).isEqualTo(4);
+        assertThat(result.hasSidecar()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Debe aplicar 0 puertas por defecto para MOTORBIKE cuando numDoors es null")
+    void shouldApplyZeroDoorsDefaultForMotorbike() {
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("MOTORBIKE", "1234BCD", null, null, null, null, null);
+        Vehicle savedVehicle = Vehicle.create(VehicleType.MOTORBIKE, "1234BCD", "Desconocido", "Desconocido", "Desconocido", 0, false, true);
+
+        when(vehiclePersistence.existsByPlate("1234BCD")).thenReturn(false);
+        when(vehiclePersistence.save(any(Vehicle.class))).thenReturn(savedVehicle);
+
+        VehicleDTO result = createVehicleUseCase.execute(createDTO);
+
+        assertThat(result.numDoors()).isEqualTo(0);
+        assertThat(result.type()).isEqualTo("MOTORBIKE");
+    }
 }
