@@ -93,6 +93,26 @@ class UpdateVehicleUseCaseTest {
     }
 
     @Test
+    @DisplayName("Debe lanzar InvalidVehicleException si la nueva matricula pertenece a otro vehiculo")
+    void shouldThrowExceptionWhenPlateBelongsToAnotherVehicle() {
+        UUID id = UUID.randomUUID();
+        UUID otherId = UUID.randomUUID();
+        Vehicle existingVehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle otherVehicle = Vehicle.reconstruct(otherId, VehicleType.CAR, "9999XYZ", "Seat", "Ibiza", "Blue", 4, false, true);
+
+        VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "9999XYZ", "Toyota", "Corolla", "Blue", 4, false);
+
+        when(vehiclePersistence.findById(id)).thenReturn(Optional.of(existingVehicle));
+        when(vehiclePersistence.findByPlate("9999XYZ")).thenReturn(Optional.of(otherVehicle));
+
+        assertThatThrownBy(() -> updateVehicleUseCase.execute(id, updatedData))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Ya existe un vehículo con la matrícula: 9999XYZ");
+
+        verify(vehiclePersistence, never()).save(any(Vehicle.class));
+    }
+
+    @Test
     @DisplayName("Debe lanzar InvalidVehicleException sin consultar la BD si el tipo del DTO no es valido")
     void shouldThrowExceptionWhenTypeIsInvalid() {
         // QUE HACE:

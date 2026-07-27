@@ -67,11 +67,6 @@ public class Vehicle{
             return new Vehicle(this.uniqueId, type, plate, brand, model, color, numDoors, hasSidecar, active);
     }
 
-    public Vehicle activate(){
-        return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model, 
-            this.color, this.numDoors, this.hasSidecar, true);
-    }
-
     public Vehicle deactivate(){
         return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model, 
             this.color, this.numDoors, this.hasSidecar, false);
