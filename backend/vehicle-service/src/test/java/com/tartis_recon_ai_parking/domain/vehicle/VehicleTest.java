@@ -130,6 +130,18 @@ class VehicleTest {
         assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, null, "Toyota", "Corolla", "Red", 4, false, true))
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Invalid vehicle data: plate can't be null");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", null, "Corolla", "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: brand can't be null");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", null, "Red", 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: model can't be null");
+
+        assertThatThrownBy(() -> Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", null, 4, false, true))
+                .isInstanceOf(InvalidVehicleException.class)
+                .hasMessageContaining("Invalid vehicle data: color can't be null");
     }
 
     @Test
