@@ -114,7 +114,7 @@ class UpdateVehicleUseCaseTest {
 
     @Test
     @DisplayName("Debe lanzar ExistingVehicleException si la nueva matrícula ya pertenece a otro vehículo")
-    void shouldThrowExceptionWhenPlateAlreadyExistsOnAnotherVehicle() {
+    void shouldThrowExceptionWhenPlateBelongsToAnotherVehicle() {
         UUID id = UUID.randomUUID();
         UUID otherId = UUID.randomUUID();
         Vehicle existingVehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
