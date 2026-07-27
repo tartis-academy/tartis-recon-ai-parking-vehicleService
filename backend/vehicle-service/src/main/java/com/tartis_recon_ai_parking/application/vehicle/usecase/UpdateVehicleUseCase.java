@@ -7,6 +7,7 @@ import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.factory.VehicleDTOFactory;
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 
@@ -31,7 +32,7 @@ public class UpdateVehicleUseCase {
 
         // 2. Recuperamos el vehiculo existente.
         Vehicle existingVehicle = vehiclePersistence.findById(id)
-                .orElseThrow(() -> new VehicleNotFoundException("Vehicle not found with ID: " + id));
+                .orElseThrow(() -> new VehicleNotFoundException("ID", id));
 
         // 3. La matricula es unique en BD. Sin esta comprobacion el choque lo
         //    detecta Postgres al hacer flush y sale como 500; aqui sale como 400.
@@ -39,23 +40,14 @@ public class UpdateVehicleUseCase {
         //    matricula la encontramos a el mismo, y eso no es un duplicado.
         vehiclePersistence.findByPlate(newData.getPlate())
                 .filter(other -> !other.getUniqueId().equals(id))
-                .ifPresent(other -> {
-                    throw new InvalidVehicleException(
-                            "Ya existe un vehículo con la matrícula: " + newData.getPlate());
-                });
+                .ifPresent(other -> {throw new ExistingVehicleException(newData.getPlate());});
 
-        // 4. Modificamos los atributos a traves de los setters con validacion.
-        //    setType va primero: setHasSidecar valida contra el tipo ya asignado.
-        //    'active' no se toca aqui: solo se cambia via PATCH /{id}/status.
-        existingVehicle.setType(newData.getType());
-        existingVehicle.setPlate(newData.getPlate());
-        existingVehicle.setBrand(newData.getBrand());
-        existingVehicle.setModel(newData.getModel());
-        existingVehicle.setColor(newData.getColor());
-        existingVehicle.setNumDoors(newData.getNumDoors());
-        existingVehicle.setHasSidecar(newData.getHasSidecar());
+        // 4. Modificamos los atributos. 'active' no se toca aqui: se conserva el
+        //    valor actual del vehiculo; solo cambia via PATCH /{id}/status.
+        Vehicle updatedVehicle = existingVehicle.update(newData.getType(), newData.getPlate(), newData.getBrand(), newData.getModel(),
+            newData.getColor(), newData.getNumDoors(), newData.getHasSidecar(), existingVehicle.isActive());
 
         // 5. Guardamos los cambios.
-        return VehicleDTOFactory.toDTO(vehiclePersistence.save(existingVehicle));
+        return VehicleDTOFactory.toDTO(vehiclePersistence.save(updatedVehicle));
     }
 }
