@@ -24,6 +24,7 @@ public interface VehiclePersistenceMapper {
         }
         return Vehicle.reconstruct(
             entity.getUniqueId(),
+            entity.getVersion(),
             entity.getType(),
             entity.getPlate(),
             entity.getBrand(),

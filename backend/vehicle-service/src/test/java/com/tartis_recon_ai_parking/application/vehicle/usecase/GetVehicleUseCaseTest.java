@@ -80,7 +80,7 @@ class GetVehicleUseCaseTest {
         // 2. Configura el mock para que al buscar por ese UUID devuelva el vehiculo.
         // 3. Invoca a 'getById' en el caso de uso.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
