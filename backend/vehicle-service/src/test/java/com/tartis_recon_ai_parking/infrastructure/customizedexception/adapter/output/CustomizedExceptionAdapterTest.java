@@ -14,6 +14,11 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.DataAccessException;
 
 import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
@@ -68,6 +73,63 @@ class CustomizedExceptionAdapterTest {
         
         assertEquals(HttpStatus.BAD_REQUEST.value(), response.getStatus());
         assertEquals("Validation failed", response.getDetail());
+        assertNotNull(response.getProperties());
         assertEquals("field: default message", response.getProperties().get("errors"));
+    }
+
+    @Test
+    void testHandleDataIntegrityViolationException() {
+        DataIntegrityViolationException ex = new DataIntegrityViolationException("Constraint violation");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ProblemDetail response = adapter.handleDataIntegrityViolationException(ex, request);
+        
+        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
+        assertEquals("Data Integrity Violation", response.getTitle());
+        assertEquals("The operation violates database constraints or uniqueness requirements.", response.getDetail());
+        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+    }
+
+    @Test
+    void testHandleDatabaseTimeoutAndConnectionErrors() {
+        DataAccessResourceFailureException ex = new DataAccessResourceFailureException("DB down");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ProblemDetail response = adapter.handleDatabaseTimeoutAndConnectionErrors(ex, request);
+        
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), response.getStatus());
+        assertEquals("Database Service Unavailable", response.getTitle());
+        assertEquals("The database is unreachable or the operation timed out. Please try again later.", response.getDetail());
+        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+    }
+
+    @Test
+    void testHandleCannotAcquireLockException() {
+        CannotAcquireLockException ex = new CannotAcquireLockException("Deadlock found");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles/1");
+
+        ProblemDetail response = adapter.handleCannotAcquireLockException(ex, request);
+        
+        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
+        assertEquals("Concurrency Lock Conflict", response.getTitle());
+        assertEquals("The resource is currently locked by another ongoing transaction. Please retry the operation.", response.getDetail());
+        assertEquals(java.net.URI.create("/v1/vehicles/1"), response.getInstance());
+    }
+
+    @Test
+    void testHandleGenericDatabaseException() {
+        DataAccessException ex = new DataAccessException("Unknown DB error") {};
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ProblemDetail response = adapter.handleGenericDatabaseException(ex, request);
+        
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), response.getStatus());
+        assertEquals("Internal Database Error", response.getTitle());
+        assertEquals("An unexpected database failure occurred. The request could not be processed.", response.getDetail());
+        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
     }
 }

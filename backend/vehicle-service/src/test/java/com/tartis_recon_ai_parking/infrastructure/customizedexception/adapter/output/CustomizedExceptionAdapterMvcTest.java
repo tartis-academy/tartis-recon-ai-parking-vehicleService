@@ -18,11 +18,15 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.CannotAcquireLockException;
 
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -108,5 +112,57 @@ class CustomizedExceptionAdapterMvcTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.detail").value("Validation failed"))
                 .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    void shouldReturn409ProblemDetailWhenDataIntegrityViolation() throws Exception {
+        VehicleRequest request = new VehicleRequest();
+        request.type = "CAR";
+        request.plate = "1234ABC";
+        request.brand = "Toyota";
+        request.model = "Corolla";
+        request.color = "Red";
+        request.numDoors = 4;
+        request.hasSidecar = false;
+
+        Mockito.when(createVehicleUseCase.execute(Mockito.any()))
+                .thenThrow(new DataIntegrityViolationException("Constraint violation"));
+
+        mockMvc.perform(post("/v1/vehicles")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.title").value("Data Integrity Violation"))
+                .andExpect(jsonPath("$.detail").value("The operation violates database constraints or uniqueness requirements."))
+                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+    }
+
+    @Test
+    void shouldReturn503ProblemDetailWhenDatabaseIsDown() throws Exception {
+        UUID id = UUID.randomUUID();
+        Mockito.when(getVehicleUseCase.getById(id))
+                .thenThrow(new DataAccessResourceFailureException("DB connection refused"));
+
+        mockMvc.perform(get("/v1/vehicles/" + id))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.title").value("Database Service Unavailable"))
+                .andExpect(jsonPath("$.detail").value("The database is unreachable or the operation timed out. Please try again later."))
+                .andExpect(jsonPath("$.instance").value("/v1/vehicles/" + id));
+    }
+
+    @Test
+    void shouldReturn409ProblemDetailWhenDeadlockOccurs() throws Exception {
+        UUID id = UUID.randomUUID();
+        Mockito.doThrow(new CannotAcquireLockException("Deadlock detected"))
+                .when(deleteVehicleUseCase).deactivate(id);
+
+        mockMvc.perform(patch("/v1/vehicles/" + id + "/status"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.title").value("Concurrency Lock Conflict"))
+                .andExpect(jsonPath("$.detail").value("The resource is currently locked by another ongoing transaction. Please retry the operation."))
+                .andExpect(jsonPath("$.instance").value("/v1/vehicles/" + id + "/status"));
     }
 }
