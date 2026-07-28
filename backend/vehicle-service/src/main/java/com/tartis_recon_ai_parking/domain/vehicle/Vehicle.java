@@ -15,16 +15,19 @@ public class Vehicle{
     private int numDoors;
     private boolean hasSidecar;
     private boolean active;
+    private Long version;
+
 
     public static Vehicle create(VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSidecar, boolean active){
-            return new Vehicle(UUID.randomUUID(), type, plate, brand, model, color, numDoors, hasSidecar, active);
+            return new Vehicle(UUID.randomUUID(), null, type, plate, brand, model, color, numDoors, hasSidecar, active);
     }
 
-    public static Vehicle reconstruct(UUID id, VehicleType type, String plate, String brand, String model, String color,
+    public static Vehicle reconstruct(UUID id, Long version, VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSidecar, boolean active){
             Vehicle v = new Vehicle();
             v.uniqueId = id;
+            v.version = version;
             v.type = type;
             v.plate = plate;
             v.brand = brand;
@@ -40,12 +43,13 @@ public class Vehicle{
     private Vehicle(){}
 
     //Vehicle constructor
-    private Vehicle(UUID id, VehicleType type, String plate, String brand, String model, String color,
+    private Vehicle(UUID id, Long version, VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSidecar, boolean active){
 
             validateData(type, plate, brand, model, color, numDoors, hasSidecar);
 
             this.uniqueId = id;
+            this.version = version;
             this.type = type;
             this.plate = plate;
             this.brand = brand;
@@ -101,17 +105,17 @@ public class Vehicle{
 
     public Vehicle update(VehicleType type, String plate, String brand, String model, 
         String color, int numDoors, boolean hasSidecar, boolean active){
-            return new Vehicle(this.uniqueId, type, plate, brand, model, color, numDoors, hasSidecar, active);
+            return new Vehicle(this.uniqueId, this.version, type, plate, brand, model, color, numDoors, hasSidecar, active);
     }
 
     public Vehicle activate(){
-        return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model, 
-            this.color, this.numDoors, this.hasSidecar, true);
+        return new Vehicle(this.uniqueId, this.version, this.type, this.plate, this.brand, 
+            this.model, this.color, this.numDoors, this.hasSidecar, true);
     }
 
     public Vehicle deactivate(){
-        return new Vehicle(this.uniqueId, this.type, this.plate, this.brand, this.model, 
-            this.color, this.numDoors, this.hasSidecar, false);
+        return new Vehicle(this.uniqueId, this.version, this.type, this.plate, this.brand, 
+            this.model, this.color, this.numDoors, this.hasSidecar, false);
     }
 
     
@@ -119,6 +123,10 @@ public class Vehicle{
     //=============== Getters ===============
     public UUID getUniqueId() {
         return uniqueId;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 
     public VehicleType getType() {
