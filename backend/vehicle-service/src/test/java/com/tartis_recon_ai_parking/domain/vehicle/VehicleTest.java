@@ -14,6 +14,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 // lambda se ejecuta sin lanzar ninguna excepcion.
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+import java.util.UUID;
+
 class VehicleTest {
 
     // @Test: Indica a JUnit que este metodo es una prueba unitaria individual que debe ejecutarse.
@@ -259,5 +261,28 @@ class VehicleTest {
                 .isInstanceOf(InvalidVehicleException.class)
                 .hasMessageContaining("Invalid vehicle data: Plate can't be empty ( )");
     }
+
+    @Test
+@DisplayName("Debe reconstruir un vehiculo asignando correctamente el id y la version")
+void shouldReconstructVehicleWithVersion() {
+    UUID id = UUID.randomUUID();
+    Long version = 1L;
+
+    Vehicle vehicle = Vehicle.reconstruct(
+            id, 
+            version, 
+            VehicleType.CAR, 
+            "1234BCD", 
+            "Toyota", 
+            "Corolla", 
+            "Red", 
+            4, 
+            false, 
+            true
+    );
+
+    assertThat(vehicle.getUniqueId()).isEqualTo(id);
+    assertThat(vehicle.getVersion()).isEqualTo(1L);
+}
 
 }

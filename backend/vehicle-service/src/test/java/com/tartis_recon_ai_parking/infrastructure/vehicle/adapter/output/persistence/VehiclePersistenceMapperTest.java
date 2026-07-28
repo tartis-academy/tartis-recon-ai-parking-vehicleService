@@ -59,8 +59,10 @@ class VehiclePersistenceMapperTest {
         // QUE HACE:
         // - Instancia y rellena un VehicleEntity con datos de prueba especificos, llama al metodo toDomain del mapeador.
         UUID id = UUID.randomUUID();
+        Long version=1L;
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
+        entity.setVersion(version);
         entity.setType(VehicleType.MOTORBIKE);
         entity.setPlate("5678BDF");
         entity.setBrand("Honda");
@@ -77,6 +79,7 @@ class VehiclePersistenceMapperTest {
         // que todos los campos del dominio se correspondan de forma exacta con los de la entidad.
         assertThat(vehicle).isNotNull();
         assertThat(vehicle.getUniqueId()).isEqualTo(id);
+        assertThat(vehicle.getVersion()).isEqualTo(version);
         assertThat(vehicle.getType()).isEqualTo(VehicleType.MOTORBIKE);
         assertThat(vehicle.getPlate()).isEqualTo("5678BDF");
         assertThat(vehicle.getBrand()).isEqualTo("Honda");
