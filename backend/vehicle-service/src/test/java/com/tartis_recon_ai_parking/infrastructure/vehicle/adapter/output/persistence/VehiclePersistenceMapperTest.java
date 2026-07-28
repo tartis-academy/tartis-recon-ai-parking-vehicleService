@@ -109,4 +109,24 @@ class VehiclePersistenceMapperTest {
 
         assertThat(vehicle).isNull();
     }
+
+    @Test
+@DisplayName("Debe mapear un vehiculo nuevo con version null sin lanzar NullPointerException")
+void shouldMapVehicleWithNullVersion() {
+    // 1. Objeto de dominio recién creado (sin ID ni versión de BBDD)
+    Vehicle newVehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+
+    // 2. Mapeo a entidad
+    VehicleEntity entity = mapper.toEntity(newVehicle);
+
+    // 3. Verificación
+    assertThat(entity).isNotNull();
+    assertThat(entity.getVersion()).isNull(); // La versión debe ser null antes de guardar en BD
+
+    // 4. Mapeo inverso (Entidad no guardada -> Dominio)
+    Vehicle domainFromEntity = mapper.toDomain(entity);
+
+    assertThat(domainFromEntity).isNotNull();
+    assertThat(domainFromEntity.getVersion()).isNull();
+}
 }
