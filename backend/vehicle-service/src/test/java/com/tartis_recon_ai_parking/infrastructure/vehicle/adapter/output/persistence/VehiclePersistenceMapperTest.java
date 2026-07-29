@@ -13,22 +13,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VehiclePersistenceMapperTest {
 
-    // Utiliza el cargador de MapStruct Mappers en lugar de instanciar directamente para evitar problemas de sincronizacion del compilador de la IDE.
+    // Utiliza el cargador de MapStruct Mappers en lugar de instanciar directamente
+    // para evitar problemas de sincronizacion del compilador de la IDE.
     private final VehiclePersistenceMapper mapper = Mappers.getMapper(VehiclePersistenceMapper.class);
 
     @Test
     @DisplayName("Debe mapear un objeto de dominio Vehicle a una entidad VehicleEntity de forma correcta")
     void shouldMapVehicleToEntity() {
         // QUE HACE:
-        // Instancia un objeto Vehicle de dominio completo con datos especificos, llama al metodo toEntity del mapeador.
+        // Instancia un objeto Vehicle de dominio completo con datos especificos, llama
+        // al metodo toEntity del mapeador.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, 1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
         VehicleEntity entity = mapper.toEntity(vehicle);
 
         // QUE DEBERIA HACER:
-        // Debe retornar un objeto VehicleEntity no nulo y comprobar mediante aserciones 
-        // de AssertJ que cada campo de persistencia coincida exactamente con el de origen.
+        // Debe retornar un objeto VehicleEntity no nulo y comprobar mediante aserciones
+        // de AssertJ que cada campo de persistencia coincida exactamente con el de
+        // origen.
         assertThat(entity).isNotNull();
         assertThat(entity.getUniqueId()).isEqualTo(id);
         assertThat(entity.getType()).isEqualTo(VehicleType.CAR);
@@ -57,9 +61,10 @@ class VehiclePersistenceMapperTest {
     @DisplayName("Debe mapear una entidad VehicleEntity a un objeto de dominio Vehicle de forma correcta")
     void shouldMapEntityToVehicle() {
         // QUE HACE:
-        // - Instancia y rellena un VehicleEntity con datos de prueba especificos, llama al metodo toDomain del mapeador.
+        // - Instancia y rellena un VehicleEntity con datos de prueba especificos, llama
+        // al metodo toDomain del mapeador.
         UUID id = UUID.randomUUID();
-        Long version=1L;
+        Long version = 1L;
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
         entity.setVersion(version);
@@ -75,8 +80,10 @@ class VehiclePersistenceMapperTest {
         Vehicle vehicle = mapper.toDomain(entity);
 
         // QUE DEBERIA HACER:
-        // Debe retornar un objeto de dominio Vehicle no nulo y comprobar mediante aserciones
-        // que todos los campos del dominio se correspondan de forma exacta con los de la entidad.
+        // Debe retornar un objeto de dominio Vehicle no nulo y comprobar mediante
+        // aserciones
+        // que todos los campos del dominio se correspondan de forma exacta con los de
+        // la entidad.
         assertThat(vehicle).isNotNull();
         assertThat(vehicle.getUniqueId()).isEqualTo(id);
         assertThat(vehicle.getVersion()).isEqualTo(version);
@@ -111,22 +118,22 @@ class VehiclePersistenceMapperTest {
     }
 
     @Test
-@DisplayName("Debe mapear un vehiculo nuevo con version null sin lanzar NullPointerException")
-void shouldMapVehicleWithNullVersion() {
-    // 1. Objeto de dominio recién creado (sin ID ni versión de BBDD)
-    Vehicle newVehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+    @DisplayName("Debe mapear un vehiculo nuevo con version null sin lanzar NullPointerException")
+    void shouldMapVehicleWithNullVersion() {
+        // 1. Objeto de dominio recién creado (sin ID ni versión de BBDD)
+        Vehicle newVehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
-    // 2. Mapeo a entidad
-    VehicleEntity entity = mapper.toEntity(newVehicle);
+        // 2. Mapeo a entidad
+        VehicleEntity entity = mapper.toEntity(newVehicle);
 
-    // 3. Verificación
-    assertThat(entity).isNotNull();
-    assertThat(entity.getVersion()).isNull(); // La versión debe ser null antes de guardar en BD
+        // 3. Verificación
+        assertThat(entity).isNotNull();
+        assertThat(entity.getVersion()).isNull(); // La versión debe ser null antes de guardar en BD
 
-    // 4. Mapeo inverso (Entidad no guardada -> Dominio)
-    Vehicle domainFromEntity = mapper.toDomain(entity);
+        // 4. Mapeo inverso (Entidad no guardada -> Dominio)
+        Vehicle domainFromEntity = mapper.toDomain(entity);
 
-    assertThat(domainFromEntity).isNotNull();
-    assertThat(domainFromEntity.getVersion()).isNull();
-}
+        assertThat(domainFromEntity).isNotNull();
+        assertThat(domainFromEntity.getVersion()).isNull();
+    }
 }

@@ -17,12 +17,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -347,4 +349,36 @@ class VehicleRestAdapterTest {
 
         verify(updateVehicleUseCase, times(1)).execute(id, createDTO);
     }
+
+    @Test
+@DisplayName("Debe responder 409 Conflict cuando se intenta actualizar un vehiculo con una version desactualizada")
+void shouldReturn409ConflictWhenUpdatingWithOutdatedVersion() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    
+    // Request enviado por el cliente con versión antigua (ej. version 0)
+    String requestJson = """
+        {
+            "version": 0,
+            "type": "CAR",
+            "plate": "1234BCD",
+            "brand": "Toyota",
+            "model": "Corolla",
+            "color": "Red",
+            "numDoors": 4,
+            "hasSidecar": false
+        }
+        """;
+
+    // Simular que el UseCase/Repositorio lanza la excepción de bloqueo optimista al intentar persistir
+    when(updateVehicleUseCase.execute(eq(id), any()))
+            .thenThrow(new ObjectOptimisticLockingFailureException("VehicleEntity", id));
+
+    // Act & Assert
+    mockMvc.perform(put("/v1/vehicles/{id}", id)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestJson))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.status").value(409));
+}
 }

@@ -2,6 +2,8 @@ package com.tartis_recon_ai_parking.infrastructure.customizedexception.adapter.o
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -10,6 +12,7 @@ import java.util.stream.Collectors;
 
 import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleConcurrentModificationException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataAccessException;
@@ -95,4 +98,22 @@ public class CustomizedExceptionAdapter {
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         return problemDetail;
     }
+
+    @ExceptionHandler(VehicleConcurrentModificationException.class)
+    public ResponseEntity<ProblemDetail> handleConcurrentModification(VehicleConcurrentModificationException ex) {
+    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+    );
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+}
+
+@ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+public ResponseEntity<ProblemDetail> handleObjectOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
+    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            "El recurso ha sido modificado por otra transacción concurrente. Por favor, obtenga la última versión e intente de nuevo."
+    );
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+}
 }

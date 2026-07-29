@@ -2,12 +2,15 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.output.persis
 
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleConcurrentModificationException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 // @ExtendWith(MockitoExtension.class): Habilita el soporte de Mockito en JUnit para pruebas unitarias rapidas.
@@ -28,7 +32,8 @@ class VehiclePersistenceAdapterTest {
     @Mock
     private VehiclePersistenceMapper vehiclePersistenceMapper;
 
-    // @InjectMocks: Crea la instancia de la clase bajo prueba e inyecta automaticamente los mocks anteriores.
+    // @InjectMocks: Crea la instancia de la clase bajo prueba e inyecta
+    // automaticamente los mocks anteriores.
     @InjectMocks
     private VehiclePersistenceAdapter vehiclePersistenceAdapter;
 
@@ -41,7 +46,8 @@ class VehiclePersistenceAdapterTest {
         // - Configura los mocks del mapper y del repositorio.
         // - Ejecuta el metodo save del adaptador.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, 1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
@@ -54,7 +60,8 @@ class VehiclePersistenceAdapterTest {
         Vehicle result = vehiclePersistenceAdapter.save(vehicle);
 
         // QUE DEBERIA HACER:
-        // Debe retornar el vehiculo persistido correctamente mapeado de vuelta y verificar que se
+        // Debe retornar el vehiculo persistido correctamente mapeado de vuelta y
+        // verificar que se
         // llamo exactamente una vez a los metodos del mapper y del repositorio.
         assertThat(result).isNotNull();
         assertThat(result.getPlate()).isEqualTo("1234BCD");
@@ -74,8 +81,9 @@ class VehiclePersistenceAdapterTest {
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
         entity.setPlate("1234BCD");
-        
-        Vehicle vehicle = Vehicle.reconstruct(id, 1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
         when(vehicleRepository.findByPlate("1234BCD")).thenReturn(Optional.of(entity));
         when(vehiclePersistenceMapper.toDomain(entity)).thenReturn(vehicle);
@@ -83,7 +91,8 @@ class VehiclePersistenceAdapterTest {
         Optional<Vehicle> result = vehiclePersistenceAdapter.findByPlate("1234BCD");
 
         // QUE DEBERIA HACER:
-        // Debe retornar un Optional con el objeto de dominio y verificar la interaccion de los mocks.
+        // Debe retornar un Optional con el objeto de dominio y verificar la interaccion
+        // de los mocks.
         assertThat(result).isPresent();
         assertThat(result.get().getPlate()).isEqualTo("1234BCD");
         verify(vehicleRepository, times(1)).findByPlate("1234BCD");
@@ -119,7 +128,8 @@ class VehiclePersistenceAdapterTest {
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
 
-        Vehicle vehicle = Vehicle.reconstruct(id, 1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
         when(vehicleRepository.findById(id)).thenReturn(Optional.of(entity));
         when(vehiclePersistenceMapper.toDomain(entity)).thenReturn(vehicle);
@@ -154,7 +164,8 @@ class VehiclePersistenceAdapterTest {
     void shouldFindAllVehicles() {
         // QUE HACE:
         // - Prepara una lista de entidades en base de datos.
-        // - Configura los mocks para retornar las entidades y mapear cada una de ellas a dominio.
+        // - Configura los mocks para retornar las entidades y mapear cada una de ellas
+        // a dominio.
         // - Llama al metodo findAll.
         VehicleEntity entity1 = new VehicleEntity();
         entity1.setPlate("1234BCD");
@@ -171,7 +182,8 @@ class VehiclePersistenceAdapterTest {
         List<Vehicle> result = vehiclePersistenceAdapter.findAll();
 
         // QUE DEBERIA HACER:
-        // Debe retornar una lista de tamaño 2 y verificar que cada elemento ha sido correctamente
+        // Debe retornar una lista de tamaño 2 y verificar que cada elemento ha sido
+        // correctamente
         // traducido al dominio.
         assertThat(result).isNotNull().hasSize(2);
         assertThat(result.get(0).getPlate()).isEqualTo("1234BCD");
@@ -184,7 +196,8 @@ class VehiclePersistenceAdapterTest {
     @DisplayName("Debe lanzar ExistingVehicleException cuando la BBDD detecta una matricula duplicada")
     void shouldThrowExistingVehicleExceptionWhenPlateIsDuplicate() {
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
@@ -192,7 +205,8 @@ class VehiclePersistenceAdapterTest {
 
         when(vehiclePersistenceMapper.toEntity(vehicle)).thenReturn(entity);
         // Simulamos que la BD salta con error al hacer flush
-        when(vehicleRepository.saveAndFlush(entity)).thenThrow(new org.springframework.dao.DataIntegrityViolationException("Duplicate plate"));
+        when(vehicleRepository.saveAndFlush(entity))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("Duplicate plate"));
 
         // Verificamos que el adaptador lo captura y lanza la excepción de dominio
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> vehiclePersistenceAdapter.save(vehicle))
@@ -201,5 +215,29 @@ class VehiclePersistenceAdapterTest {
         verify(vehiclePersistenceMapper, times(1)).toEntity(vehicle);
         verify(vehicleRepository, times(1)).saveAndFlush(entity);
         verify(vehiclePersistenceMapper, never()).toDomain(any());
+    }
+
+    @Test
+    @DisplayName("Debe capturar ObjectOptimisticLockingFailureException y relanzar VehicleConcurrentModificationException")
+    void shouldThrowConcurrentModificationExceptionWhenOptimisticLockingFails() {
+        // Arrange
+        UUID id = UUID.randomUUID();
+        Vehicle vehicle = Vehicle.reconstruct(
+                id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+
+        VehicleEntity entity = new VehicleEntity();
+        entity.setUniqueId(id);
+        entity.setVersion(1L);
+
+        when(vehiclePersistenceMapper.toEntity(vehicle)).thenReturn(entity);
+        when(vehicleRepository.saveAndFlush(entity))
+                .thenThrow(new ObjectOptimisticLockingFailureException(VehicleEntity.class, id));
+
+        // Act & Assert
+        assertThatThrownBy(() -> vehiclePersistenceAdapter.save(vehicle))
+                .isInstanceOf(VehicleConcurrentModificationException.class)
+                .hasCauseInstanceOf(ObjectOptimisticLockingFailureException.class);
+
+        verify(vehicleRepository, times(1)).saveAndFlush(entity);
     }
 }

@@ -3,8 +3,10 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.output.persis
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleConcurrentModificationException;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.List;
@@ -23,17 +25,19 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
 
     @Override
     public Vehicle save(Vehicle vehicle) {
-        try {
         VehicleEntity entity = vehiclePersistenceMapper.toEntity(vehicle);
         
-        // saveAndFlush obliga a ejecutar el INSERT/UPDATE ahora mismo
-        VehicleEntity savedEntity = vehicleRepository.saveAndFlush(entity);
-        
-        return vehiclePersistenceMapper.toDomain(savedEntity);
-    } catch (DataIntegrityViolationException e) {
-        // Capturamos el choque de dos hilos guardando la misma matrícula
-        throw new ExistingVehicleException(vehicle.getPlate());
-    }
+        try {
+            VehicleEntity savedEntity = vehicleRepository.saveAndFlush(entity);
+            return vehiclePersistenceMapper.toDomain(savedEntity);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw new VehicleConcurrentModificationException(vehicle.getPlate(), e);
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMessage() != null && e.getMessage().contains("uk_vehicle_plate")) {
+                throw new ExistingVehicleException(vehicle.getPlate());
+            }
+            throw e;
+        }
     }
 
     @Override
