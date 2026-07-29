@@ -18,11 +18,17 @@ public class Vehicle{
     private Long version;
 
 
+    // Vehicle es una entidad de dominio anemica por diseno: agrupar estos campos en un
+    // parameter object no aporta invariantes nuevas y solo trasladaria el problema a otro
+    // tipo. Se acepta el exceso de parametros en el constructor y en los metodos de
+    // creacion/reconstruccion (java:S107).
+    @SuppressWarnings("java:S107")
     public static Vehicle create(VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSidecar, boolean active){
             return new Vehicle(UUID.randomUUID(), null, type, plate, brand, model, color, numDoors, hasSidecar, active);
     }
 
+    @SuppressWarnings("java:S107")
     public static Vehicle reconstruct(UUID id, Long version, VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSidecar, boolean active){
             Vehicle v = new Vehicle();
@@ -43,6 +49,7 @@ public class Vehicle{
     private Vehicle(){}
 
     //Vehicle constructor
+    @SuppressWarnings("java:S107")
     private Vehicle(UUID id, Long version, VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSidecar, boolean active){
 
@@ -103,7 +110,8 @@ public class Vehicle{
 
     }
 
-    public Vehicle update(VehicleType type, String plate, String brand, String model, 
+    @SuppressWarnings("java:S107")
+    public Vehicle update(VehicleType type, String plate, String brand, String model,
         String color, int numDoors, boolean hasSidecar, boolean active){
             return new Vehicle(this.uniqueId, this.version, type, plate, brand, model, color, numDoors, hasSidecar, active);
     }
