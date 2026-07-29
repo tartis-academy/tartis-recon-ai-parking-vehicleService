@@ -15,9 +15,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import com.tartis_recon_ai_parking.infrastructure.config.SecurityConfig;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 // @WebMvcTest: Se enfoca unicamente en la capa web (Spring MVC) e inicializa MockMvc.
 // Solo carga VehicleRestAdapter en el contexto para hacer pruebas unitarias rapidas y aisladas de endpoints.
@@ -33,7 +36,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // Tras el refactor a DTOs el adaptador ya no construye objetos de dominio: pide al mapper
 // un VehicleCreateDTO y se lo entrega al caso de uso, que le devuelve un VehicleDTO. Por eso
 // aqui todo se simula con DTOs y no con Vehicle.
+//
+// Desde SEC-04 hay que traer el SecurityFilterChain al slice explicitamente: @WebMvcTest NO
+// hace component-scan de clases @Configuration propias como SecurityConfig, asi que sin este
+// @Import el bean SecurityFilterChain no existe en el contexto y no se aplica ningun filtro
+// (todo pasaria con 200, sin necesidad de token). Con el @Import activo, las llamadas de
+// negocio llevan .with(jwt()) para simular una peticion autenticada. El caso sin token se
+// prueba aparte, al final de la clase.
 @WebMvcTest(VehicleRestAdapter.class)
+@Import(SecurityConfig.class)
 class VehicleRestAdapterTest {
 
     // MockMvc: Permite realizar llamadas HTTP simuladas (GET, POST, etc.) a los endpoints
@@ -89,6 +100,7 @@ class VehicleRestAdapterTest {
         // Debe retornar estado 200 OK con la representacion JSON de la lista de vehiculos
         // y comprobar que la longitud de la lista es 2 y que los campos coinciden.
         mockMvc.perform(get("/v1/vehicles")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -119,6 +131,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe responder con 200 OK y el cuerpo JSON con los datos correctos del vehiculo.
         mockMvc.perform(get("/v1/vehicles/{id}", id)
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uniqueId").value(id.toString()))
@@ -142,6 +155,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe retornar estado 404 Not Found con el mensaje correspondiente en el cuerpo.
         mockMvc.perform(get("/v1/vehicles/{id}", id)
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Vehicle with 'ID = " + id + "' couldn't be found."));
@@ -167,6 +181,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe responder con 200 OK y el cuerpo JSON conteniendo la informacion del vehiculo.
         mockMvc.perform(get("/v1/vehicles/plate/1234ABC")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.plate").value("1234ABC"));
@@ -185,6 +200,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe retornar estado 404 Not Found con el mensaje de error.
         mockMvc.perform(get("/v1/vehicles/plate/9999XYZ")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Vehicle with 'plate = 9999XYZ' couldn't be found."));
@@ -222,6 +238,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe retornar 201 Created con el DTO mapeado que incluye el identificador unico generado.
         mockMvc.perform(post("/v1/vehicles")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -258,6 +275,7 @@ class VehicleRestAdapterTest {
         // La InvalidVehicleException que sube desde la aplicacion debe traducirse en un
         // 400 Bad Request con el mensaje del error, via CustomizedExceptionAdapter.
         mockMvc.perform(post("/v1/vehicles")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -285,6 +303,7 @@ class VehicleRestAdapterTest {
         // Spring Boot interceptara la peticion por el validador @Valid y devolvera 400 Bad Request
         // sin llegar a ejecutar el caso de uso.
         mockMvc.perform(post("/v1/vehicles")
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -304,6 +323,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe retornar 204 No Content y verificar que se llamo a deleteVehicleUseCase.deactivate().
         mockMvc.perform(patch("/v1/vehicles/{id}/status", id)
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
 
@@ -339,6 +359,7 @@ class VehicleRestAdapterTest {
         // Debe retornar 200 OK con los datos actualizados del vehiculo, pasando al caso de uso
         // el id de la URL y el cuerpo por separado.
         mockMvc.perform(put("/v1/vehicles/{id}", id)
+                .with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -346,5 +367,21 @@ class VehicleRestAdapterTest {
                 .andExpect(jsonPath("$.plate").value("1234ABC"));
 
         verify(updateVehicleUseCase, times(1)).execute(id, createDTO);
+    }
+
+    // --- SEC-04: verificacion propia del resource server, no de negocio ---
+
+    @Test
+    @DisplayName("Debe rechazar con 401 una peticion sin token")
+    void shouldReturn401WhenNoTokenProvided() throws Exception {
+        // QUE HACE:
+        // - Llama a un endpoint valido sin adjuntar ningun JWT (sin .with(jwt())).
+        // QUE DEBERIA HACER:
+        // El SecurityFilterChain de SEC-04 debe cortar la peticion antes de que llegue al
+        // controller: 401 Unauthorized y el caso de uso no se invoca.
+        mockMvc.perform(get("/v1/vehicles"))
+                .andExpect(status().isUnauthorized());
+
+        verify(getVehicleUseCase, never()).execute();
     }
 }
