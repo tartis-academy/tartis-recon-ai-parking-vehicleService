@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,29 @@ class KeycloakRoleConverterTest {
         Collection<GrantedAuthority> authorities = converter.convert(jwt);
 
         assertThat(authorities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Debe devolver una coleccion vacia si roles no es una coleccion (ej. llega como String suelto)")
+    void shouldReturnEmptyWhenRolesClaimIsNotACollection() {
+        Jwt jwt = buildJwt(Map.of("roles", "ADMIN"));
+
+        Collection<GrantedAuthority> authorities = converter.convert(jwt);
+
+        assertThat(authorities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Debe ignorar elementos nulos, en blanco o de tipo distinto a String dentro de la lista de roles")
+    void shouldFilterOutInvalidRoleEntries() {
+        List<Object> rolesWithNoise = Arrays.asList("ADMIN", null, "", "   ", 42, "OPERARIO");
+        Jwt jwt = buildJwt(Map.of("roles", rolesWithNoise));
+
+        Collection<GrantedAuthority> authorities = converter.convert(jwt);
+
+        assertThat(authorities)
+                .extracting(GrantedAuthority::getAuthority)
+                .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_OPERARIO");
     }
 
     private Jwt buildJwt(Map<String, Object> realmAccess) {
