@@ -18,6 +18,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import com.tartis_recon_ai_parking.infrastructure.config.SecurityConfig;
 
@@ -100,7 +101,7 @@ class VehicleRestAdapterTest {
         // Debe retornar estado 200 OK con la representacion JSON de la lista de vehiculos
         // y comprobar que la longitud de la lista es 2 y que los campos coinciden.
         mockMvc.perform(get("/v1/vehicles")
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -131,7 +132,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe responder con 200 OK y el cuerpo JSON con los datos correctos del vehiculo.
         mockMvc.perform(get("/v1/vehicles/{id}", id)
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uniqueId").value(id.toString()))
@@ -155,7 +156,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe retornar estado 404 Not Found con el mensaje correspondiente en el cuerpo.
         mockMvc.perform(get("/v1/vehicles/{id}", id)
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Vehicle with 'ID = " + id + "' couldn't be found."));
@@ -181,7 +182,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe responder con 200 OK y el cuerpo JSON conteniendo la informacion del vehiculo.
         mockMvc.perform(get("/v1/vehicles/plate/1234ABC")
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.plate").value("1234ABC"));
@@ -200,7 +201,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe retornar estado 404 Not Found con el mensaje de error.
         mockMvc.perform(get("/v1/vehicles/plate/9999XYZ")
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Vehicle with 'plate = 9999XYZ' couldn't be found."));
@@ -238,7 +239,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe retornar 201 Created con el DTO mapeado que incluye el identificador unico generado.
         mockMvc.perform(post("/v1/vehicles")
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -275,7 +276,7 @@ class VehicleRestAdapterTest {
         // La InvalidVehicleException que sube desde la aplicacion debe traducirse en un
         // 400 Bad Request con el mensaje del error, via CustomizedExceptionAdapter.
         mockMvc.perform(post("/v1/vehicles")
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -303,7 +304,7 @@ class VehicleRestAdapterTest {
         // Spring Boot interceptara la peticion por el validador @Valid y devolvera 400 Bad Request
         // sin llegar a ejecutar el caso de uso.
         mockMvc.perform(post("/v1/vehicles")
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -323,7 +324,7 @@ class VehicleRestAdapterTest {
         // QUE DEBERIA HACER:
         // Debe retornar 204 No Content y verificar que se llamo a deleteVehicleUseCase.deactivate().
         mockMvc.perform(patch("/v1/vehicles/{id}/status", id)
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
 
@@ -359,7 +360,7 @@ class VehicleRestAdapterTest {
         // Debe retornar 200 OK con los datos actualizados del vehiculo, pasando al caso de uso
         // el id de la URL y el cuerpo por separado.
         mockMvc.perform(put("/v1/vehicles/{id}", id)
-                .with(jwt())
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -383,5 +384,175 @@ class VehicleRestAdapterTest {
                 .andExpect(status().isUnauthorized());
 
         verify(getVehicleUseCase, never()).execute();
+    }
+
+    // --- SEC-10: pruebas de autorizacion fina para el rol OPERARIO ---
+
+    @Test
+    @DisplayName("OPERARIO: Debe denegar la consulta de todos los vehiculos (403)")
+    void shouldDenyGetAllVehiclesForOperario() throws Exception {
+        mockMvc.perform(get("/v1/vehicles")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        verify(getVehicleUseCase, never()).execute();
+    }
+
+    @Test
+    @DisplayName("OPERARIO: Debe denegar la consulta de vehiculo por ID (403)")
+    void shouldDenyGetVehicleByIdForOperario() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(get("/v1/vehicles/{id}", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        verify(getVehicleUseCase, never()).getById(any());
+    }
+
+    @Test
+    @DisplayName("OPERARIO: Debe permitir la consulta de vehiculo por matricula (200)")
+    void shouldAllowGetVehicleByPlateForOperario() throws Exception {
+        UUID id = UUID.randomUUID();
+        VehicleDTO vehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+
+        when(getVehicleUseCase.getByPlate("1234ABC")).thenReturn(vehicle);
+        when(vehicleRestMapper.toResponse(vehicle)).thenReturn(responseDto);
+
+        mockMvc.perform(get("/v1/vehicles/plate/1234ABC")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("OPERARIO: Debe denegar la creacion de un vehiculo (403)")
+    void shouldDenyCreateVehicleForOperario() throws Exception {
+        VehicleRequest request = new VehicleRequest();
+        request.type = "CAR";
+        request.plate = "1234ABC";
+        request.brand = "Toyota";
+        request.model = "Corolla";
+        request.color = "Red";
+        request.numDoors = 4;
+        request.hasSidecar = false;
+
+        mockMvc.perform(post("/v1/vehicles")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+        verify(createVehicleUseCase, never()).execute(any());
+    }
+
+    @Test
+    @DisplayName("OPERARIO: Debe denegar la desactivacion de un vehiculo (403)")
+    void shouldDenyDeactivateVehicleForOperario() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(patch("/v1/vehicles/{id}/status", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        verify(deleteVehicleUseCase, never()).deactivate(any());
+    }
+
+    @Test
+    @DisplayName("OPERARIO: Debe denegar la actualizacion de un vehiculo (403)")
+    void shouldDenyUpdateVehicleForOperario() throws Exception {
+        UUID id = UUID.randomUUID();
+        VehicleRequest request = new VehicleRequest();
+        request.type = "CAR";
+        request.plate = "1234ABC";
+        request.brand = "Toyota";
+        request.model = "Corolla";
+        request.color = "Red";
+        request.numDoors = 4;
+        request.hasSidecar = false;
+
+        mockMvc.perform(put("/v1/vehicles/{id}", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+        verify(updateVehicleUseCase, never()).execute(any(), any());
+    }
+
+    // --- SEC-10: pruebas de autorizacion fina para el rol USER ---
+
+    @Test
+    @DisplayName("USER: Debe denegar la consulta de todos los vehiculos (403)")
+    void shouldDenyGetAllVehiclesForUser() throws Exception {
+        mockMvc.perform(get("/v1/vehicles")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("USER: Debe denegar la consulta de vehiculo por ID (403)")
+    void shouldDenyGetVehicleByIdForUser() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(get("/v1/vehicles/{id}", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("USER: Debe denegar la consulta de vehiculo por matricula (403)")
+    void shouldDenyGetVehicleByPlateForUser() throws Exception {
+        mockMvc.perform(get("/v1/vehicles/plate/1234ABC")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("USER: Debe denegar la creacion de un vehiculo (403)")
+    void shouldDenyCreateVehicleForUser() throws Exception {
+        VehicleRequest request = new VehicleRequest();
+        request.type = "CAR";
+        request.plate = "1234ABC";
+        request.brand = "Toyota";
+        request.model = "Corolla";
+        request.color = "Red";
+        request.numDoors = 4;
+        request.hasSidecar = false;
+
+        mockMvc.perform(post("/v1/vehicles")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("USER: Debe denegar la desactivacion de un vehiculo (403)")
+    void shouldDenyDeactivateVehicleForUser() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(patch("/v1/vehicles/{id}/status", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("USER: Debe denegar la actualizacion de un vehiculo (403)")
+    void shouldDenyUpdateVehicleForUser() throws Exception {
+        UUID id = UUID.randomUUID();
+        VehicleRequest request = new VehicleRequest();
+        request.type = "CAR";
+        request.plate = "1234ABC";
+        request.brand = "Toyota";
+        request.model = "Corolla";
+        request.color = "Red";
+        request.numDoors = 4;
+        request.hasSidecar = false;
+
+        mockMvc.perform(put("/v1/vehicles/{id}", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
     }
 }
