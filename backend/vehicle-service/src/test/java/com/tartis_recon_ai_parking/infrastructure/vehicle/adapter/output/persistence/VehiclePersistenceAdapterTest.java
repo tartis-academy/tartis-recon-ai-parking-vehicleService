@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.List;
@@ -205,8 +206,8 @@ class VehiclePersistenceAdapterTest {
 
         when(vehiclePersistenceMapper.toEntity(vehicle)).thenReturn(entity);
         // Simulamos que la BD salta con error al hacer flush
-        when(vehicleRepository.saveAndFlush(entity))
-                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("Duplicate plate"));
+when(vehicleRepository.saveAndFlush(any()))
+    .thenThrow(new DataIntegrityViolationException("could not execute statement; SQL [n/a]; constraint [uk_vehicle_plate]"));
 
         // Verificamos que el adaptador lo captura y lanza la excepción de dominio
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> vehiclePersistenceAdapter.save(vehicle))
