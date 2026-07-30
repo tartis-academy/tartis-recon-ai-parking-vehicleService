@@ -8,9 +8,28 @@
 -- Silencioso en dev y en CI: en dev ddl-auto=update crea la columna sola y CI
 -- no arranca nunca en perfil prod, asi que solo se ve al levantar el stack.
 --
--- Nullable porque las filas existentes no tienen version, y porque la entidad
--- no marca la columna como NOT NULL: Hibernate trata NULL como "sin version
--- todavia" y arranca el contador en el primer UPDATE. Mismo criterio que
--- V2__add_version.sql de tariff-service.
+-- NOT NULL DEFAULT 0, y no es cosmetico. Con la columna nullable las filas que
+-- ya existan quedan con version NULL, y entonces Spring Data decide en
+-- JpaMetamodelEntityInformation.isNew() que la entidad es NUEVA:
+--
+--   return wrapper.getPropertyValue(versionAttribute.getName()) == null;
+--
+-- (con @Version de tipo Long, no primitivo, ese es el camino que toma). El
+-- save() siguiente hace persist() en vez de merge: un INSERT contra una PK que
+-- ya existe.
+--
+-- Reproducido sobre el stack real: poniendo version=NULL a mano en una fila y
+-- actualizandola por la API, la respuesta es
+--   400 "There's already a vehicle with the specified plate : 4321BCD"
+-- porque el DataIntegrityViolationException del INSERT se reporta como
+-- matricula duplicada. Un diagnostico completamente falso.
+--
+-- El DEFAULT 0 cubre las filas preexistentes; Hibernate asigna la version el
+-- solo en cada INSERT posterior, asi que el default no se usa mas alla de la
+-- propia migracion. Mismo criterio que V2__add_version.sql de spot-service.
+--
+-- Que la entidad no marque nullable=false da igual: el validador de esquema de
+-- Hibernate comprueba existencia y tipo, no nullability, asi que NOT NULL en
+-- BD pasa ddl-auto=validate sin problema. spot ya lo demuestra.
 ALTER TABLE vehicles
-    ADD COLUMN version BIGINT;
+    ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
