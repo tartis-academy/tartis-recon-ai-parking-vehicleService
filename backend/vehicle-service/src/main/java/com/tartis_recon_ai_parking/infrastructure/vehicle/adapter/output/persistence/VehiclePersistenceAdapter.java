@@ -34,7 +34,7 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
             throw new VehicleConcurrentModificationException(vehicle.getPlate(), e);
         } catch (DataIntegrityViolationException e) {
             if (e.getMessage() != null && e.getMessage().contains("uk_vehicle_plate")) {
-                throw new ExistingVehicleException(vehicle.getPlate());
+                throw new ExistingVehicleException(vehicle.getPlate(), e);
             }
             throw e;
         }
