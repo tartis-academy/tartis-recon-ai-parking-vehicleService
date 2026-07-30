@@ -1,6 +1,7 @@
 package com.tartis_recon_ai_parking.infrastructure.customizedexception.adapter.output;
 
 import tools.jackson.databind.ObjectMapper;
+import com.tartis_recon_ai_parking.application.vehicle.usecase.ActivateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
@@ -59,6 +60,9 @@ class CustomizedExceptionAdapterMvcTest {
 
     @MockitoBean
     private DeleteVehicleUseCase deleteVehicleUseCase;
+
+    @MockitoBean
+    private ActivateVehicleUseCase activateVehicleUseCase;
 
     @MockitoBean
     private VehicleRestMapper mapper;
