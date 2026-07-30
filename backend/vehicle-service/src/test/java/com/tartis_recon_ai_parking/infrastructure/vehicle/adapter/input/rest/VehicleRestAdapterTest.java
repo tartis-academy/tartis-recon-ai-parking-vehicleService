@@ -433,6 +433,7 @@ class VehicleRestAdapterTest {
                 .content(requestJson))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
+    }
     // --- SEC-04: verificacion propia del resource server, no de negocio ---
 
     @Test
