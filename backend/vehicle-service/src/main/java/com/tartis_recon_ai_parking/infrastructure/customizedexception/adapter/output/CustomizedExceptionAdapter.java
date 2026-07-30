@@ -18,6 +18,7 @@ import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.QueryTimeoutException;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -108,7 +109,7 @@ public class CustomizedExceptionAdapter {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
 }
 
-@ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+@ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockingFailureException.class})
 public ResponseEntity<ProblemDetail> handleObjectOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.CONFLICT,
