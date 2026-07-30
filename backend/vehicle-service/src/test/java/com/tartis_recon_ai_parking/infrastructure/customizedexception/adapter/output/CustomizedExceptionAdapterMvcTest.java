@@ -9,6 +9,7 @@ import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseC
 import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleConcurrentModificationException;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.VehicleRestAdapter;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.VehicleRestMapper;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
@@ -26,6 +27,7 @@ import com.tartis_recon_ai_parking.infrastructure.config.SecurityConfig;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.UUID;
 
@@ -185,6 +187,58 @@ class CustomizedExceptionAdapterMvcTest {
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.title").value("Concurrency Lock Conflict"))
                 .andExpect(jsonPath("$.detail").value("The resource is currently locked by another ongoing transaction. Please retry the operation."))
+                .andExpect(jsonPath("$.instance").value("/v1/vehicles/" + id + "/status"));
+    }
+
+    @Test
+    void shouldReturn409ProblemDetailWhenVehicleConcurrentModification() throws Exception {
+        VehicleRequest request = new VehicleRequest();
+        request.type = "CAR";
+        request.plate = "1234ABC";
+        request.brand = "Toyota";
+        request.model = "Corolla";
+        request.color = "Red";
+        request.numDoors = 4;
+        request.hasSidecar = false;
+
+        Mockito.when(createVehicleUseCase.execute(Mockito.any()))
+                .thenThrow(new VehicleConcurrentModificationException("1234ABC",
+                        new ObjectOptimisticLockingFailureException("VehicleEntity", "1234ABC")));
+
+        mockMvc.perform(post("/v1/vehicles")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.title").value("Concurrent Modification Conflict"))
+                .andExpect(jsonPath("$.detail").value("Vehicle with plate '1234ABC' was modified by another transaction. Please refresh and try again."))
+                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+    }
+
+    // Red de seguridad: un choque optimista que llegue sin pasar por el adaptador de
+    // persistencia (lanzado por Spring Data en otro punto) tampoco debe salir como 500.
+    // ObjectOptimisticLockingFailureException es subtipo de OptimisticLockingFailureException,
+    // que es lo unico que declara el handler.
+    @Test
+    void shouldReturn409ProblemDetailWhenRawOptimisticLockingFailure() throws Exception {
+        UUID id = UUID.randomUUID();
+        Mockito.when(deleteVehicleUseCase.deactivate(id))
+                .thenThrow(new ObjectOptimisticLockingFailureException("VehicleEntity", id));
+
+        // Desde el PR #55 el endpoint lee el cuerpo con @Valid @RequestBody, asi que sin el
+        // la peticion muere en validacion con un 400 y nunca llega al caso de uso.
+        // active=false para que tome la rama de deactivate(), que es el mock que lanza.
+        VehicleStatusRequest request = new VehicleStatusRequest(false);
+
+        mockMvc.perform(patch("/v1/vehicles/" + id + "/status")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.title").value("Concurrent Modification Conflict"))
+                .andExpect(jsonPath("$.detail").value("The resource was modified by another transaction. Please fetch the latest version and retry."))
                 .andExpect(jsonPath("$.instance").value("/v1/vehicles/" + id + "/status"));
     }
 }

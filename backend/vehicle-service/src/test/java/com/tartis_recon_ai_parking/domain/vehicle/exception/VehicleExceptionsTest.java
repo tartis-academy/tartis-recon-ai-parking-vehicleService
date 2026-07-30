@@ -1,6 +1,7 @@
 package com.tartis_recon_ai_parking.domain.vehicle.exception;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,5 +33,24 @@ class VehicleExceptionsTest {
         ExistingVehicleException ex = new ExistingVehicleException("1234ABC");
         assertEquals("1234ABC", ex.getPlate());
         assertEquals("There's already a vehicle with the specified plate : 1234ABC", ex.getMessage());
+    }
+
+    @Test
+    void testExistingVehicleExceptionWithCause() {
+        Throwable cause = new IllegalStateException("duplicate key value violates unique constraint");
+        ExistingVehicleException ex = new ExistingVehicleException("1234ABC", cause);
+        assertEquals("1234ABC", ex.getPlate());
+        assertEquals("There's already a vehicle with the specified plate : 1234ABC", ex.getMessage());
+        assertSame(cause, ex.getCause());
+    }
+
+    @Test
+    void testVehicleConcurrentModificationException() {
+        Throwable cause = new IllegalStateException("Row was updated by another transaction");
+        VehicleConcurrentModificationException ex = new VehicleConcurrentModificationException("1234ABC", cause);
+        assertEquals("1234ABC", ex.getPlate());
+        assertEquals("Vehicle with plate '1234ABC' was modified by another transaction. Please refresh and try again.",
+                ex.getMessage());
+        assertSame(cause, ex.getCause());
     }
 }

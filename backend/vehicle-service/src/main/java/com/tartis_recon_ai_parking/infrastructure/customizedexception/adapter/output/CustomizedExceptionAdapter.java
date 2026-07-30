@@ -11,10 +11,12 @@ import java.util.stream.Collectors;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleConcurrentModificationException;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.QueryTimeoutException;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -82,6 +84,31 @@ public class CustomizedExceptionAdapter {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "The resource is currently locked by another ongoing transaction. Please retry the operation.");
         problemDetail.setType(URI.create("https://api.tartis.com/errors/concurrency-conflict"));
         problemDetail.setTitle("Concurrency Lock Conflict");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        return problemDetail;
+    }
+
+    // Conflicto de concurrencia optimista: @Version detectó una modificación
+    // simultánea. Se traduce a 409 para que el cliente pueda recargar y reintentar.
+    @ExceptionHandler(VehicleConcurrentModificationException.class)
+    public ProblemDetail handleConcurrentModification(VehicleConcurrentModificationException ex, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problemDetail.setType(URI.create("https://api.tartis.com/errors/concurrency-conflict"));
+        problemDetail.setTitle("Concurrent Modification Conflict");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        return problemDetail;
+    }
+
+    // Red de seguridad: un choque optimista que no haya pasado por el adaptador
+    // (p. ej. lanzado por Spring Data en otro punto) tampoco debe salir como 500.
+    // Basta con declarar el supertipo: ObjectOptimisticLockingFailureException
+    // extiende de él y queda cubierta.
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ProblemDetail handleOptimisticLocking(OptimisticLockingFailureException ex, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "The resource was modified by another transaction. Please fetch the latest version and retry.");
+        problemDetail.setType(URI.create("https://api.tartis.com/errors/concurrency-conflict"));
+        problemDetail.setTitle("Concurrent Modification Conflict");
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         return problemDetail;
     }

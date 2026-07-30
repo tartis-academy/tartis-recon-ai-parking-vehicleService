@@ -19,10 +19,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleConcurrentModificationException;
 
 class CustomizedExceptionAdapterTest {
 
@@ -116,6 +119,39 @@ class CustomizedExceptionAdapterTest {
         assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
         assertEquals("Concurrency Lock Conflict", response.getTitle());
         assertEquals("The resource is currently locked by another ongoing transaction. Please retry the operation.", response.getDetail());
+        assertEquals(java.net.URI.create("/v1/vehicles/1"), response.getInstance());
+    }
+
+    @Test
+    void testHandleConcurrentModification() {
+        VehicleConcurrentModificationException ex = new VehicleConcurrentModificationException("1234ABC",
+                new ObjectOptimisticLockingFailureException("VehicleEntity", "1234ABC"));
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ProblemDetail response = adapter.handleConcurrentModification(ex, request);
+
+        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
+        assertEquals("Concurrent Modification Conflict", response.getTitle());
+        assertEquals("Vehicle with plate '1234ABC' was modified by another transaction. Please refresh and try again.", response.getDetail());
+        assertEquals(java.net.URI.create("https://api.tartis.com/errors/concurrency-conflict"), response.getType());
+        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+    }
+
+    @Test
+    void testHandleOptimisticLocking() {
+        // El subtipo ObjectOptimisticLockingFailureException entra por el handler del
+        // supertipo: es justo lo que evita tener que declarar los dos en @ExceptionHandler.
+        OptimisticLockingFailureException ex = new ObjectOptimisticLockingFailureException("VehicleEntity", "1234ABC");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles/1");
+
+        ProblemDetail response = adapter.handleOptimisticLocking(ex, request);
+
+        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
+        assertEquals("Concurrent Modification Conflict", response.getTitle());
+        assertEquals("The resource was modified by another transaction. Please fetch the latest version and retry.", response.getDetail());
+        assertEquals(java.net.URI.create("https://api.tartis.com/errors/concurrency-conflict"), response.getType());
         assertEquals(java.net.URI.create("/v1/vehicles/1"), response.getInstance());
     }
 

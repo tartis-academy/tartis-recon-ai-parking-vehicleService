@@ -202,4 +202,33 @@ class VehiclePersistenceAdapterTest {
         verify(vehicleRepository, times(1)).saveAndFlush(entity);
         verify(vehiclePersistenceMapper, never()).toDomain(any());
     }
+
+    // Complementa (no sustituye) a VehiclePersistenceAdapterConcurrencyTest: alli el choque
+    // lo provoca Hibernate contra un Postgres real, que es lo que de verdad demuestra que
+    // @Version funciona. Este solo cubre el cableado del catch y no depende de Docker.
+    @Test
+    @DisplayName("Debe lanzar VehicleConcurrentModificationException cuando salta el bloqueo optimista")
+    void shouldThrowConcurrentModificationExceptionWhenOptimisticLockingFails() {
+        UUID id = UUID.randomUUID();
+        Vehicle vehicle = Vehicle.reconstruct(id, 0L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+
+        VehicleEntity entity = new VehicleEntity();
+        entity.setUniqueId(id);
+        entity.setPlate("1234BCD");
+
+        org.springframework.dao.OptimisticLockingFailureException cause =
+                new org.springframework.orm.ObjectOptimisticLockingFailureException(VehicleEntity.class, id);
+
+        when(vehiclePersistenceMapper.toEntity(vehicle)).thenReturn(entity);
+        when(vehicleRepository.saveAndFlush(entity)).thenThrow(cause);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> vehiclePersistenceAdapter.save(vehicle))
+                .isInstanceOf(com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleConcurrentModificationException.class)
+                .hasMessageContaining("1234BCD")
+                .hasCause(cause);
+
+        verify(vehiclePersistenceMapper, times(1)).toEntity(vehicle);
+        verify(vehicleRepository, times(1)).saveAndFlush(entity);
+        verify(vehiclePersistenceMapper, never()).toDomain(any());
+    }
 }
