@@ -10,7 +10,9 @@ import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 public class UpdateVehicleUseCase {
 
     private final VehiclePersistence vehiclePersistence;
