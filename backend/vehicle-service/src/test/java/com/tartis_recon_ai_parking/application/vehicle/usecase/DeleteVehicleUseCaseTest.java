@@ -67,7 +67,7 @@ class DeleteVehicleUseCaseTest {
     @DisplayName("Debe mantener active=false de forma idempotente al desactivar un vehiculo ya inactivo")
     void shouldMaintainActiveFalseWhenVehicleAlreadyInactive() throws VehicleNotFoundException {
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
 
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
 
