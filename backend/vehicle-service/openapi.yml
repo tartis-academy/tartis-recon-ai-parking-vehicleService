@@ -203,6 +203,44 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /vehicles/{id}/activate:
+    patch:
+      tags: [vehicles]
+      operationId: activateVehicle
+      summary: Activates a vehicle
+      parameters:
+        - $ref: '#/components/parameters/VehicleIdPath'
+      responses:
+        '200':
+          description: Vehicle activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponse'
+        '404':
+          $ref: '#/components/responses/VehicleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /vehicles/{id}/deactivate:
+    patch:
+      tags: [vehicles]
+      operationId: deactivateVehicle
+      summary: Deactivates a vehicle
+      parameters:
+        - $ref: '#/components/parameters/VehicleIdPath'
+      responses:
+        '200':
+          description: Vehicle deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleResponse'
+        '404':
+          $ref: '#/components/responses/VehicleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
 components:
   schemas:
 
