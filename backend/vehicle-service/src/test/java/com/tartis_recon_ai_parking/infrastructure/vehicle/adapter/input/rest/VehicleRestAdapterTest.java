@@ -423,7 +423,7 @@ class VehicleRestAdapterTest {
 
         // Act & Assert
         mockMvc.perform(put("/v1/vehicles/{id}", id)
-                .with(jwt()) // <-- simula un JWT valido (OAuth2 Resource Server / Keycloak)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))) // <-- simula un JWT valido (OAuth2 Resource Server / Keycloak)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
                 .andExpect(status().isConflict())
