@@ -15,6 +15,7 @@ import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,24 +48,28 @@ public class VehicleRestAdapter {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Iterable<VehicleResponse>> getAllVehicles() {
         Iterable<VehicleDTO> vehicles = getVehicleUseCase.execute();
         return ResponseEntity.ok(mapper.toResponseList(vehicles));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VehicleResponse> getVehicleById(@PathVariable UUID id) {
         VehicleDTO vehicle = getVehicleUseCase.getById(id);
         return ResponseEntity.ok(mapper.toResponse(vehicle));
     }
 
     @GetMapping("/plate/{plate}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO')")
     public ResponseEntity<VehicleResponse> getByPlate(@PathVariable String plate) {
         VehicleDTO vehicle = getVehicleUseCase.getByPlate(plate);
         return ResponseEntity.ok(mapper.toResponse(vehicle));
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody VehicleRequest request) throws ExistingVehicleException {
         VehicleDTO savedVehicle = createVehicleUseCase.execute(mapper.toCreateDTO(request));
         return new ResponseEntity<>(mapper.toResponse(savedVehicle), HttpStatus.CREATED);
@@ -78,12 +83,14 @@ public class VehicleRestAdapter {
      * 404 Not Found  -> no existe vehiculo con ese id (VehicleNotFoundException)
      */
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deactivateVehicle(@PathVariable UUID id) {
         deleteVehicleUseCase.deactivate(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VehicleResponse> updateVehicle(@PathVariable UUID id,
                                                          @Valid @RequestBody VehicleRequest request) {
         VehicleDTO updatedVehicle = updateVehicleUseCase.execute(id, mapper.toCreateDTO(request));

@@ -15,9 +15,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import com.tartis_recon_ai_parking.infrastructure.config.SecurityConfig;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.CannotAcquireLockException;
@@ -29,8 +32,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
+// Desde SEC-04 hay que traer el SecurityFilterChain al slice con @Import (ver detalle en
+// VehicleRestAdapterTest). Con el filtro activo, todas las llamadas necesitan .with(jwt())
+// para simular una peticion autenticada, si no el filtro corta con 401 antes de que el caso
+// de uso lance la excepcion que este test quiere comprobar.
 @WebMvcTest(VehicleRestAdapter.class)
+@Import(SecurityConfig.class)
 class CustomizedExceptionAdapterMvcTest {
 
     @Autowired
@@ -60,7 +69,7 @@ class CustomizedExceptionAdapterMvcTest {
         Mockito.when(getVehicleUseCase.getById(id))
                 .thenThrow(new VehicleNotFoundException("ID", id));
 
-        mockMvc.perform(get("/v1/vehicles/" + id))
+        mockMvc.perform(get("/v1/vehicles/" + id).with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.detail").value("Vehicle with 'ID = " + id + "' couldn't be found."));
@@ -72,7 +81,7 @@ class CustomizedExceptionAdapterMvcTest {
         Mockito.when(getVehicleUseCase.getById(id))
                 .thenThrow(new InvalidVehicleException("Plate", "invalid", "Invalid plate pattern"));
 
-        mockMvc.perform(get("/v1/vehicles/" + id))
+        mockMvc.perform(get("/v1/vehicles/" + id).with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.detail").value("Invalid plate pattern"));
@@ -93,6 +102,7 @@ class CustomizedExceptionAdapterMvcTest {
                 .thenThrow(new ExistingVehicleException("1234ABC"));
 
         mockMvc.perform(post("/v1/vehicles")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -106,6 +116,7 @@ class CustomizedExceptionAdapterMvcTest {
         // Missing required fields like plate, brand, etc.
 
         mockMvc.perform(post("/v1/vehicles")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -129,6 +140,7 @@ class CustomizedExceptionAdapterMvcTest {
                 .thenThrow(new DataIntegrityViolationException("Constraint violation"));
 
         mockMvc.perform(post("/v1/vehicles")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
@@ -144,7 +156,7 @@ class CustomizedExceptionAdapterMvcTest {
         Mockito.when(getVehicleUseCase.getById(id))
                 .thenThrow(new DataAccessResourceFailureException("DB connection refused"));
 
-        mockMvc.perform(get("/v1/vehicles/" + id))
+        mockMvc.perform(get("/v1/vehicles/" + id).with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.status").value(503))
                 .andExpect(jsonPath("$.title").value("Database Service Unavailable"))
@@ -158,7 +170,7 @@ class CustomizedExceptionAdapterMvcTest {
         Mockito.doThrow(new CannotAcquireLockException("Deadlock detected"))
                 .when(deleteVehicleUseCase).deactivate(id);
 
-        mockMvc.perform(patch("/v1/vehicles/" + id + "/status"))
+        mockMvc.perform(patch("/v1/vehicles/" + id + "/status").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.title").value("Concurrency Lock Conflict"))
