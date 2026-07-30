@@ -1,6 +1,7 @@
 package com.tartis_recon_ai_parking.infrastructure.customizedexception.adapter.output;
 
 import tools.jackson.databind.ObjectMapper;
+import com.tartis_recon_ai_parking.application.vehicle.usecase.ActivateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
@@ -11,6 +12,7 @@ import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundExcep
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.VehicleRestAdapter;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.VehicleRestMapper;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
+import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleStatusRequest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +61,9 @@ class CustomizedExceptionAdapterMvcTest {
 
     @MockitoBean
     private DeleteVehicleUseCase deleteVehicleUseCase;
+
+    @MockitoBean
+    private ActivateVehicleUseCase activateVehicleUseCase;
 
     @MockitoBean
     private VehicleRestMapper mapper;
@@ -167,10 +172,15 @@ class CustomizedExceptionAdapterMvcTest {
     @Test
     void shouldReturn409ProblemDetailWhenDeadlockOccurs() throws Exception {
         UUID id = UUID.randomUUID();
-        Mockito.doThrow(new CannotAcquireLockException("Deadlock detected"))
-                .when(deleteVehicleUseCase).deactivate(id);
+        Mockito.when(deleteVehicleUseCase.deactivate(id))
+                .thenThrow(new CannotAcquireLockException("Deadlock detected"));
 
-        mockMvc.perform(patch("/v1/vehicles/" + id + "/status").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+        VehicleStatusRequest request = new VehicleStatusRequest(false);
+
+        mockMvc.perform(patch("/v1/vehicles/" + id + "/status")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.title").value("Concurrency Lock Conflict"))

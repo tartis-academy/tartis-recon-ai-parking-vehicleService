@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
+import com.tartis_recon_ai_parking.application.vehicle.usecase.ActivateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
@@ -18,10 +19,11 @@ class BeanConfigurationTest {
     private final BeanConfiguration config = new BeanConfiguration();
 
     @Test
-    @DisplayName("Debe instanciar los cuatro beans de casos de uso")
+    @DisplayName("Debe instanciar los cinco beans de casos de uso")
     void shouldCreateAllUseCaseBeans() {
         assertThat(config.createVehicleUseCase(mockPersistence)).isInstanceOf(CreateVehicleUseCase.class);
         assertThat(config.deleteVehicleUseCase(mockPersistence)).isInstanceOf(DeleteVehicleUseCase.class);
+        assertThat(config.activateVehicleUseCase(mockPersistence)).isInstanceOf(ActivateVehicleUseCase.class);
         assertThat(config.updateVehicleUseCase(mockPersistence)).isInstanceOf(UpdateVehicleUseCase.class);
         assertThat(config.getVehicleUseCase(mockPersistence)).isInstanceOf(GetVehicleUseCase.class);
     }

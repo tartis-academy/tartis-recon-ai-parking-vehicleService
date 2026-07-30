@@ -2,6 +2,7 @@
 package com.tartis_recon_ai_parking.infrastructure.config;
 
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
+import com.tartis_recon_ai_parking.application.vehicle.usecase.ActivateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
@@ -20,6 +21,10 @@ public class BeanConfiguration {
     @Bean
     DeleteVehicleUseCase deleteVehicleUseCase(VehiclePersistence vehiclePersistence) {
         return new DeleteVehicleUseCase(vehiclePersistence);
+    }
+    @Bean
+    ActivateVehicleUseCase activateVehicleUseCase(VehiclePersistence vehiclePersistence) {
+        return new ActivateVehicleUseCase(vehiclePersistence);
     }
     @Bean
     UpdateVehicleUseCase updateVehicleUseCase(VehiclePersistence vehiclePersistence) {
