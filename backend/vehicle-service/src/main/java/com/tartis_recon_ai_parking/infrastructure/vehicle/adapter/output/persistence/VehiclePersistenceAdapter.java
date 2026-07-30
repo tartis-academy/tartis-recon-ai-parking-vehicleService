@@ -7,7 +7,10 @@ import java.util.Optional;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Component
+@Transactional
 public class VehiclePersistenceAdapter implements VehiclePersistence {
 
     private final VehicleRepository vehicleRepository;
