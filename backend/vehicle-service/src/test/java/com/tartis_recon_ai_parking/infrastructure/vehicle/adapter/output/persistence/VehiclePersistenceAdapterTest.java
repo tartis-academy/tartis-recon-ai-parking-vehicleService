@@ -41,14 +41,14 @@ class VehiclePersistenceAdapterTest {
         // - Configura los mocks del mapper y del repositorio.
         // - Ejecuta el metodo save del adaptador.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
         entity.setPlate("1234BCD");
 
         when(vehiclePersistenceMapper.toEntity(vehicle)).thenReturn(entity);
-        when(vehicleRepository.save(entity)).thenReturn(entity);
+        when(vehicleRepository.saveAndFlush(entity)).thenReturn(entity);
         when(vehiclePersistenceMapper.toDomain(entity)).thenReturn(vehicle);
 
         Vehicle result = vehiclePersistenceAdapter.save(vehicle);
@@ -59,7 +59,7 @@ class VehiclePersistenceAdapterTest {
         assertThat(result).isNotNull();
         assertThat(result.getPlate()).isEqualTo("1234BCD");
         verify(vehiclePersistenceMapper, times(1)).toEntity(vehicle);
-        verify(vehicleRepository, times(1)).save(entity);
+        verify(vehicleRepository, times(1)).saveAndFlush(entity);
         verify(vehiclePersistenceMapper, times(1)).toDomain(entity);
     }
 
@@ -75,7 +75,7 @@ class VehiclePersistenceAdapterTest {
         entity.setUniqueId(id);
         entity.setPlate("1234BCD");
         
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         when(vehicleRepository.findByPlate("1234BCD")).thenReturn(Optional.of(entity));
         when(vehiclePersistenceMapper.toDomain(entity)).thenReturn(vehicle);
@@ -119,7 +119,7 @@ class VehiclePersistenceAdapterTest {
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
 
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         when(vehicleRepository.findById(id)).thenReturn(Optional.of(entity));
         when(vehiclePersistenceMapper.toDomain(entity)).thenReturn(vehicle);
@@ -178,5 +178,28 @@ class VehiclePersistenceAdapterTest {
         assertThat(result.get(1).getPlate()).isEqualTo("5678BDF");
         verify(vehicleRepository, times(1)).findAll();
         verify(vehiclePersistenceMapper, times(2)).toDomain(any());
+    }
+
+    @Test
+    @DisplayName("Debe lanzar ExistingVehicleException cuando la BBDD detecta una matricula duplicada")
+    void shouldThrowExistingVehicleExceptionWhenPlateIsDuplicate() {
+        UUID id = UUID.randomUUID();
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+
+        VehicleEntity entity = new VehicleEntity();
+        entity.setUniqueId(id);
+        entity.setPlate("1234BCD");
+
+        when(vehiclePersistenceMapper.toEntity(vehicle)).thenReturn(entity);
+        // Simulamos que la BD salta con error al hacer flush
+        when(vehicleRepository.saveAndFlush(entity)).thenThrow(new org.springframework.dao.DataIntegrityViolationException("Duplicate plate"));
+
+        // Verificamos que el adaptador lo captura y lanza la excepción de dominio
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> vehiclePersistenceAdapter.save(vehicle))
+                .isInstanceOf(com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException.class);
+
+        verify(vehiclePersistenceMapper, times(1)).toEntity(vehicle);
+        verify(vehicleRepository, times(1)).saveAndFlush(entity);
+        verify(vehiclePersistenceMapper, never()).toDomain(any());
     }
 }

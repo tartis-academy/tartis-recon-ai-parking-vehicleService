@@ -30,6 +30,8 @@ public class VehicleEntity {
     @Column(nullable = false)
     private Boolean active;
 
+    @Version
+    private Long version;
 
     public VehicleEntity() {}
 
@@ -59,4 +61,7 @@ public class VehicleEntity {
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+
+    public Long getVersion() {return version;}
+    public void setVersion(Long version) {this.version = version;}
 }
