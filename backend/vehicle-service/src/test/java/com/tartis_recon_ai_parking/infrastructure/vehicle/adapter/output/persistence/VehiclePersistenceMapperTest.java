@@ -22,7 +22,7 @@ class VehiclePersistenceMapperTest {
         // QUE HACE:
         // Instancia un objeto Vehicle de dominio completo con datos especificos, llama al metodo toEntity del mapeador.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         VehicleEntity entity = mapper.toEntity(vehicle);
 
@@ -32,7 +32,7 @@ class VehiclePersistenceMapperTest {
         assertThat(entity).isNotNull();
         assertThat(entity.getUniqueId()).isEqualTo(id);
         assertThat(entity.getType()).isEqualTo(VehicleType.CAR);
-        assertThat(entity.getPlate()).isEqualTo("1234ABC");
+        assertThat(entity.getPlate()).isEqualTo("1234BCD");
         assertThat(entity.getBrand()).isEqualTo("Toyota");
         assertThat(entity.getModel()).isEqualTo("Corolla");
         assertThat(entity.getColor()).isEqualTo("Red");
@@ -62,7 +62,7 @@ class VehiclePersistenceMapperTest {
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
         entity.setType(VehicleType.MOTORBIKE);
-        entity.setPlate("5678DEF");
+        entity.setPlate("5678BDF");
         entity.setBrand("Honda");
         entity.setModel("CBR");
         entity.setColor("Black");
@@ -78,7 +78,7 @@ class VehiclePersistenceMapperTest {
         assertThat(vehicle).isNotNull();
         assertThat(vehicle.getUniqueId()).isEqualTo(id);
         assertThat(vehicle.getType()).isEqualTo(VehicleType.MOTORBIKE);
-        assertThat(vehicle.getPlate()).isEqualTo("5678DEF");
+        assertThat(vehicle.getPlate()).isEqualTo("5678BDF");
         assertThat(vehicle.getBrand()).isEqualTo("Honda");
         assertThat(vehicle.getModel()).isEqualTo("CBR");
         assertThat(vehicle.getColor()).isEqualTo("Black");

@@ -3,7 +3,6 @@ package com.tartis_recon_ai_parking.application.vehicle.usecase;
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
-import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,13 +35,13 @@ class DeleteVehicleUseCaseTest {
 
     @Test
     @DisplayName("Debe desactivar el vehiculo (active=false) y guardar si el vehiculo existe")
-    void shouldDeactivateVehicleSuccessfully() throws InvalidVehicleException, VehicleNotFoundException {
+    void shouldDeactivateVehicleSuccessfully() throws VehicleNotFoundException {
         // QUE HACE:
         // 1. Instancia un objeto Vehicle activo.
         // 2. Configura el mock para retornar ese vehiculo al buscarlo por su ID.
         // 3. Ejecuta la desactivacion a traves del caso de uso.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
@@ -81,7 +80,7 @@ class DeleteVehicleUseCaseTest {
         // nunca se invoque el metodo 'save' de la base de datos.
         assertThatThrownBy(() -> deleteVehicleUseCase.deactivate(id))
                 .isInstanceOf(VehicleNotFoundException.class)
-                .hasMessageContaining("Vehículo no encontrado con id: " + id);
+                .hasMessageContaining("Vehicle with 'ID = " + id + "' couldn't be found.");
 
         verify(vehiclePersistence, never()).save(any(Vehicle.class));
     }

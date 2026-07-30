@@ -15,14 +15,14 @@ public class GetVehicleUseCase {
         this.persistence = persistence;
     }
 
-    public VehicleDTO getByPlate(String plate) throws VehicleNotFoundException {
+    public VehicleDTO getByPlate(String plate) {
         return VehicleDTOFactory.toDTO(persistence.findByPlate(plate)
-                .orElseThrow(() -> new VehicleNotFoundException("Vehicle with plate " + plate + " not found")));
+                .orElseThrow(() -> new VehicleNotFoundException("Plate", plate)));
     }
 
-    public VehicleDTO getById(UUID id) throws VehicleNotFoundException {
+    public VehicleDTO getById(UUID id) {
         return VehicleDTOFactory.toDTO(persistence.findById(id)
-                .orElseThrow(() -> new VehicleNotFoundException("Vehicle with ID " + id + " not found")));
+                .orElseThrow(() -> new VehicleNotFoundException("ID", id)));
     }
 
     public List<VehicleDTO> execute() {

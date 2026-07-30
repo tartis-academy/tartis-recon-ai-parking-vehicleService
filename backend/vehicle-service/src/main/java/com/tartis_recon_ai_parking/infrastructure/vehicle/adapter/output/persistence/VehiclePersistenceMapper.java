@@ -34,7 +34,5 @@ public interface VehiclePersistenceMapper {
             entity.getActive()
         );
     }
-
-    
     
 }

@@ -41,11 +41,11 @@ class VehiclePersistenceAdapterTest {
         // - Configura los mocks del mapper y del repositorio.
         // - Ejecuta el metodo save del adaptador.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
-        entity.setPlate("1234ABC");
+        entity.setPlate("1234BCD");
 
         when(vehiclePersistenceMapper.toEntity(vehicle)).thenReturn(entity);
         when(vehicleRepository.save(entity)).thenReturn(entity);
@@ -57,7 +57,7 @@ class VehiclePersistenceAdapterTest {
         // Debe retornar el vehiculo persistido correctamente mapeado de vuelta y verificar que se
         // llamo exactamente una vez a los metodos del mapper y del repositorio.
         assertThat(result).isNotNull();
-        assertThat(result.getPlate()).isEqualTo("1234ABC");
+        assertThat(result.getPlate()).isEqualTo("1234BCD");
         verify(vehiclePersistenceMapper, times(1)).toEntity(vehicle);
         verify(vehicleRepository, times(1)).save(entity);
         verify(vehiclePersistenceMapper, times(1)).toDomain(entity);
@@ -73,20 +73,20 @@ class VehiclePersistenceAdapterTest {
         UUID id = UUID.randomUUID();
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
-        entity.setPlate("1234ABC");
+        entity.setPlate("1234BCD");
         
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
-        when(vehicleRepository.findByPlate("1234ABC")).thenReturn(Optional.of(entity));
+        when(vehicleRepository.findByPlate("1234BCD")).thenReturn(Optional.of(entity));
         when(vehiclePersistenceMapper.toDomain(entity)).thenReturn(vehicle);
 
-        Optional<Vehicle> result = vehiclePersistenceAdapter.findByPlate("1234ABC");
+        Optional<Vehicle> result = vehiclePersistenceAdapter.findByPlate("1234BCD");
 
         // QUE DEBERIA HACER:
         // Debe retornar un Optional con el objeto de dominio y verificar la interaccion de los mocks.
         assertThat(result).isPresent();
-        assertThat(result.get().getPlate()).isEqualTo("1234ABC");
-        verify(vehicleRepository, times(1)).findByPlate("1234ABC");
+        assertThat(result.get().getPlate()).isEqualTo("1234BCD");
+        verify(vehicleRepository, times(1)).findByPlate("1234BCD");
         verify(vehiclePersistenceMapper, times(1)).toDomain(entity);
     }
 
@@ -119,7 +119,7 @@ class VehiclePersistenceAdapterTest {
         VehicleEntity entity = new VehicleEntity();
         entity.setUniqueId(id);
 
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         when(vehicleRepository.findById(id)).thenReturn(Optional.of(entity));
         when(vehiclePersistenceMapper.toDomain(entity)).thenReturn(vehicle);
@@ -139,14 +139,14 @@ class VehiclePersistenceAdapterTest {
         // QUE HACE:
         // - Configura el repositorio para indicar que la matricula si existe (true).
         // - Invoca existsByPlate en el adaptador.
-        when(vehicleRepository.existsByPlate("1234ABC")).thenReturn(true);
+        when(vehicleRepository.existsByPlate("1234BCD")).thenReturn(true);
 
-        boolean exists = vehiclePersistenceAdapter.existsByPlate("1234ABC");
+        boolean exists = vehiclePersistenceAdapter.existsByPlate("1234BCD");
 
         // QUE DEBERIA HACER:
         // Debe retornar true.
         assertThat(exists).isTrue();
-        verify(vehicleRepository, times(1)).existsByPlate("1234ABC");
+        verify(vehicleRepository, times(1)).existsByPlate("1234BCD");
     }
 
     @Test
@@ -157,12 +157,12 @@ class VehiclePersistenceAdapterTest {
         // - Configura los mocks para retornar las entidades y mapear cada una de ellas a dominio.
         // - Llama al metodo findAll.
         VehicleEntity entity1 = new VehicleEntity();
-        entity1.setPlate("1234ABC");
+        entity1.setPlate("1234BCD");
         VehicleEntity entity2 = new VehicleEntity();
-        entity2.setPlate("5678DEF");
+        entity2.setPlate("5678BDF");
 
-        Vehicle domain1 = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        Vehicle domain2 = Vehicle.create(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, true, true);
+        Vehicle domain1 = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle domain2 = Vehicle.create(VehicleType.MOTORBIKE, "5678BDF", "Honda", "CBR", "Black", 0, true, true);
 
         when(vehicleRepository.findAll()).thenReturn(List.of(entity1, entity2));
         when(vehiclePersistenceMapper.toDomain(entity1)).thenReturn(domain1);
@@ -174,8 +174,8 @@ class VehiclePersistenceAdapterTest {
         // Debe retornar una lista de tamaño 2 y verificar que cada elemento ha sido correctamente
         // traducido al dominio.
         assertThat(result).isNotNull().hasSize(2);
-        assertThat(result.get(0).getPlate()).isEqualTo("1234ABC");
-        assertThat(result.get(1).getPlate()).isEqualTo("5678DEF");
+        assertThat(result.get(0).getPlate()).isEqualTo("1234BCD");
+        assertThat(result.get(1).getPlate()).isEqualTo("5678BDF");
         verify(vehicleRepository, times(1)).findAll();
         verify(vehiclePersistenceMapper, times(2)).toDomain(any());
     }

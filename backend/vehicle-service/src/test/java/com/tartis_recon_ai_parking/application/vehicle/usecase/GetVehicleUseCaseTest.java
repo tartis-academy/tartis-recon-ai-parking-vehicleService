@@ -40,19 +40,19 @@ class GetVehicleUseCaseTest {
     void shouldGetVehicleByPlate() throws InvalidVehicleException, VehicleNotFoundException {
         // QUE HACE:
         // 1. Crea un vehiculo de dominio valido, que es lo que devuelve la persistencia.
-        // 2. Configura el mock para que, al buscar por matricula "1234ABC", retorne el vehiculo envuelto en un Optional.
+        // 2. Configura el mock para que, al buscar por matricula "1234BCD", retorne el vehiculo envuelto en un Optional.
         // 3. Llama al metodo 'getByPlate' en el caso de uso.
-        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
-        when(vehiclePersistence.findByPlate("1234ABC")).thenReturn(Optional.of(vehicle));
+        when(vehiclePersistence.findByPlate("1234BCD")).thenReturn(Optional.of(vehicle));
 
-        VehicleDTO result = getVehicleUseCase.getByPlate("1234ABC");
+        VehicleDTO result = getVehicleUseCase.getByPlate("1234BCD");
 
         // QUE DEBERIA HACER:
         // Debe retornar el DTO de salida correcto sin lanzar excepciones, y con los datos correctos.
         assertThat(result).isNotNull();
-        assertThat(result.plate()).isEqualTo("1234ABC");
+        assertThat(result.plate()).isEqualTo("1234BCD");
     }
 
     @Test
@@ -69,7 +69,7 @@ class GetVehicleUseCaseTest {
         // Debe lanzar VehicleNotFoundException con un mensaje de error descriptivo indicando que no se encontro el coche.
         assertThatThrownBy(() -> getVehicleUseCase.getByPlate("UNKNOWN"))
                 .isInstanceOf(VehicleNotFoundException.class)
-                .hasMessageContaining("Vehicle with plate UNKNOWN not found");
+                .hasMessageContaining("Vehicle with 'Plate = UNKNOWN' couldn't be found.");
     }
 
     @Test
@@ -80,7 +80,7 @@ class GetVehicleUseCaseTest {
         // 2. Configura el mock para que al buscar por ese UUID devuelva el vehiculo.
         // 3. Invoca a 'getById' en el caso de uso.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
@@ -109,7 +109,7 @@ class GetVehicleUseCaseTest {
         // Debe lanzar la excepcion VehicleNotFoundException indicando que no se encontro el vehiculo por ID.
         assertThatThrownBy(() -> getVehicleUseCase.getById(id))
                 .isInstanceOf(VehicleNotFoundException.class)
-                .hasMessageContaining("Vehicle with ID " + id + " not found");
+                .hasMessageContaining("Vehicle with 'ID = " + id + "' couldn't be found.");
     }
 
     @Test
@@ -119,8 +119,8 @@ class GetVehicleUseCaseTest {
         // 1. Crea dos vehiculos de dominio diferentes.
         // 2. Configura el mock para retornar una lista que contenga ambos vehiculos cuando se llame a findAll().
         // 3. Llama al metodo 'execute' del caso de uso.
-        Vehicle vehicle1 = Vehicle.create(VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        Vehicle vehicle2 = Vehicle.create(VehicleType.MOTORBIKE, "5678DEF", "Honda", "CBR", "Black", 0, false, true);
+        Vehicle vehicle1 = Vehicle.create(VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle2 = Vehicle.create(VehicleType.MOTORBIKE, "5678BDF", "Honda", "CBR", "Black", 0, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findAll()).thenReturn(List.of(vehicle1, vehicle2));
@@ -133,7 +133,7 @@ class GetVehicleUseCaseTest {
         assertThat(result).hasSize(2);
         assertThat(result)
                 .extracting(VehicleDTO::plate)
-                .containsExactly("1234ABC", "5678DEF");
+                .containsExactly("1234BCD", "5678BDF");
         assertThat(result)
                 .extracting(VehicleDTO::type)
                 .containsExactly("CAR", "MOTORBIKE");
