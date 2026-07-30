@@ -49,7 +49,7 @@ class UpdateVehicleUseCaseTest {
         // 4. Configura el mock para retornar el objeto guardado al llamar a save().
         UUID id = UUID.randomUUID();
         // Parte desactivada (active = false) para comprobar que el update no la reactiva.
-        Vehicle existingVehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
+        Vehicle existingVehicle = Vehicle.reconstruct(id,1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
 
         VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "1234BCD", "Toyota", "Corolla", "Blue", 4, false);
 
@@ -98,8 +98,8 @@ class UpdateVehicleUseCaseTest {
     void shouldThrowExceptionWhenPlateBelongsToAnotherVehicle() {
         UUID id = UUID.randomUUID();
         UUID otherId = UUID.randomUUID();
-        Vehicle existingVehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
-        Vehicle otherVehicle = Vehicle.reconstruct(otherId, VehicleType.CAR, "9999XYZ", "Seat", "Ibiza", "Blue", 4, false, true);
+        Vehicle existingVehicle = Vehicle.reconstruct(id, 1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle otherVehicle = Vehicle.reconstruct(otherId, 1L,VehicleType.CAR, "9999XYZ", "Seat", "Ibiza", "Blue", 4, false, true);
 
         VehicleCreateDTO updatedData = new VehicleCreateDTO("CAR", "9999XYZ", "Toyota", "Corolla", "Blue", 4, false);
 

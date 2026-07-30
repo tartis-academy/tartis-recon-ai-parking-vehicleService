@@ -2,6 +2,9 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.output.persis
 
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.List;
@@ -23,9 +26,17 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
 
     @Override
     public Vehicle save(Vehicle vehicle) {
+        try {
         VehicleEntity entity = vehiclePersistenceMapper.toEntity(vehicle);
-        VehicleEntity savedEntity = vehicleRepository.save(entity);
+        
+        // saveAndFlush obliga a ejecutar el INSERT/UPDATE ahora mismo
+        VehicleEntity savedEntity = vehicleRepository.saveAndFlush(entity);
+        
         return vehiclePersistenceMapper.toDomain(savedEntity);
+    } catch (DataIntegrityViolationException e) {
+        // Capturamos el choque de dos hilos guardando la misma matrícula
+        throw new ExistingVehicleException(vehicle.getPlate());
+    }
     }
 
     @Override
