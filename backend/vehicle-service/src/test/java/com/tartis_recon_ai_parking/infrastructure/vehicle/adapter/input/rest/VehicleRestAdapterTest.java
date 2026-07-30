@@ -24,12 +24,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import com.tartis_recon_ai_parking.infrastructure.config.SecurityConfig;
 
-
 import java.util.List;
 import java.util.UUID;
-import org.springframework.security.test.context.support.WithMockUser;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -403,11 +400,9 @@ class VehicleRestAdapterTest {
 
     @Test
     @DisplayName("Debe responder 409 Conflict cuando se intenta actualizar un vehiculo con una version desactualizada")
-    @WithMockUser
     void shouldReturn409ConflictWhenUpdatingWithOutdatedVersion() throws Exception {
         // Arrange
         UUID id = UUID.randomUUID();
-
         // Request enviado por el cliente con versión antigua (ej. version 0)
         String requestJson = """
                 {
@@ -421,7 +416,6 @@ class VehicleRestAdapterTest {
                     "hasSidecar": false
                 }
                 """;
-
         // Simular que el UseCase/Repositorio lanza la excepción de bloqueo optimista al
         // intentar persistir
         when(updateVehicleUseCase.execute(eq(id), any()))
@@ -429,6 +423,7 @@ class VehicleRestAdapterTest {
 
         // Act & Assert
         mockMvc.perform(put("/v1/vehicles/{id}", id)
+                .with(jwt()) // <-- simula un JWT valido (OAuth2 Resource Server / Keycloak)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
                 .andExpect(status().isConflict())
@@ -442,7 +437,8 @@ class VehicleRestAdapterTest {
         // QUE HACE:
         // - Llama a un endpoint valido sin adjuntar ningun JWT (sin .with(jwt())).
         // QUE DEBERIA HACER:
-        // El SecurityFilterChain de SEC-04 debe cortar la peticion antes de que llegue al
+        // El SecurityFilterChain de SEC-04 debe cortar la peticion antes de que llegue
+        // al
         // controller: 401 Unauthorized y el caso de uso no se invoca.
         mockMvc.perform(get("/v1/vehicles"))
                 .andExpect(status().isUnauthorized());
@@ -478,7 +474,8 @@ class VehicleRestAdapterTest {
     void shouldAllowGetVehicleByPlateForOperario() throws Exception {
         UUID id = UUID.randomUUID();
         VehicleDTO vehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
         when(getVehicleUseCase.getByPlate("1234ABC")).thenReturn(vehicle);
         when(vehicleRestMapper.toResponse(vehicle)).thenReturn(responseDto);
