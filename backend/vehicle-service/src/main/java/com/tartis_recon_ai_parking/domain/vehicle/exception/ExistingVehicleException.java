@@ -10,6 +10,13 @@ public class ExistingVehicleException extends RuntimeException {
         this.plate = plate;
     }
 
+    // Conserva la excepcion original (violacion de la constraint) como causa,
+    // para no perder el rastro al traducir en el adaptador de persistencia.
+    public ExistingVehicleException(String plate, Throwable cause) {
+        super("There's already a vehicle with the specified plate : " + plate, cause);
+        this.plate = plate;
+    }
+
     public String getPlate(){
         return this.plate;
     }
