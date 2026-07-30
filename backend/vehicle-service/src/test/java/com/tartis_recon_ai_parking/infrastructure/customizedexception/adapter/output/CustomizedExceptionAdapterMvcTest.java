@@ -223,10 +223,18 @@ class CustomizedExceptionAdapterMvcTest {
     @Test
     void shouldReturn409ProblemDetailWhenRawOptimisticLockingFailure() throws Exception {
         UUID id = UUID.randomUUID();
-        Mockito.doThrow(new ObjectOptimisticLockingFailureException("VehicleEntity", id))
-                .when(deleteVehicleUseCase).deactivate(id);
+        Mockito.when(deleteVehicleUseCase.deactivate(id))
+                .thenThrow(new ObjectOptimisticLockingFailureException("VehicleEntity", id));
 
-        mockMvc.perform(patch("/v1/vehicles/" + id + "/status").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+        // Desde el PR #55 el endpoint lee el cuerpo con @Valid @RequestBody, asi que sin el
+        // la peticion muere en validacion con un 400 y nunca llega al caso de uso.
+        // active=false para que tome la rama de deactivate(), que es el mock que lanza.
+        VehicleStatusRequest request = new VehicleStatusRequest(false);
+
+        mockMvc.perform(patch("/v1/vehicles/" + id + "/status")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.title").value("Concurrent Modification Conflict"))
