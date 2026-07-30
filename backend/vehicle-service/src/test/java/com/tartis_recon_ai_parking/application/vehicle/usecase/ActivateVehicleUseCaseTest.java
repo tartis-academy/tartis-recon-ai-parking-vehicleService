@@ -1,5 +1,6 @@
 package com.tartis_recon_ai_parking.application.vehicle.usecase;
 
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
@@ -35,14 +36,16 @@ class ActivateVehicleUseCaseTest {
         Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
 
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
+        when(vehiclePersistence.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        activateVehicleUseCase.activate(id);
+        VehicleDTO result = activateVehicleUseCase.activate(id);
 
         ArgumentCaptor<Vehicle> vehicleCaptor = ArgumentCaptor.forClass(Vehicle.class);
         verify(vehiclePersistence, times(1)).save(vehicleCaptor.capture());
 
         Vehicle savedVehicle = vehicleCaptor.getValue();
         assertThat(savedVehicle.isActive()).isTrue();
+        assertThat(result.active()).isTrue();
     }
 
     @Test
@@ -52,14 +55,16 @@ class ActivateVehicleUseCaseTest {
         Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
+        when(vehiclePersistence.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        activateVehicleUseCase.activate(id);
+        VehicleDTO result = activateVehicleUseCase.activate(id);
 
         ArgumentCaptor<Vehicle> vehicleCaptor = ArgumentCaptor.forClass(Vehicle.class);
         verify(vehiclePersistence, times(1)).save(vehicleCaptor.capture());
 
         Vehicle savedVehicle = vehicleCaptor.getValue();
         assertThat(savedVehicle.isActive()).isTrue();
+        assertThat(result.active()).isTrue();
     }
 
     @Test

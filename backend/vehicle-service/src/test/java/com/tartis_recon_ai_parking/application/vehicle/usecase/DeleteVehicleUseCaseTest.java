@@ -1,5 +1,6 @@
 package com.tartis_recon_ai_parking.application.vehicle.usecase;
 
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
@@ -45,22 +46,16 @@ class DeleteVehicleUseCaseTest {
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
+        when(vehiclePersistence.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        deleteVehicleUseCase.deactivate(id);
+        VehicleDTO result = deleteVehicleUseCase.deactivate(id);
 
-        // QUE DEBERIA HACER:
-        // Debe recuperar el vehiculo de base de datos, establecer 'active' en false,
-        // llamar al metodo save para persistir el cambio y asegurar mediante un ArgumentCaptor 
-        // de Mockito que el estado del vehiculo enviado a persistir tiene 'active = false'.
-        
-        // ArgumentCaptor: Es una herramienta que te permite "atrapar" el objeto que el caso de uso envio 
-        // al mock para guardarlo (en el metodo save). Esto te permite validar si el caso de uso modifico los 
-        // datos de la forma deseada (en este caso, comprobar que seteo active a false).
         ArgumentCaptor<Vehicle> vehicleCaptor = ArgumentCaptor.forClass(Vehicle.class);
         verify(vehiclePersistence, times(1)).save(vehicleCaptor.capture());
         
         Vehicle savedVehicle = vehicleCaptor.getValue();
         assertThat(savedVehicle.isActive()).isFalse();
+        assertThat(result.active()).isFalse();
     }
 
     @Test
@@ -70,14 +65,16 @@ class DeleteVehicleUseCaseTest {
         Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
 
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
+        when(vehiclePersistence.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        deleteVehicleUseCase.deactivate(id);
+        VehicleDTO result = deleteVehicleUseCase.deactivate(id);
 
         ArgumentCaptor<Vehicle> vehicleCaptor = ArgumentCaptor.forClass(Vehicle.class);
         verify(vehiclePersistence, times(1)).save(vehicleCaptor.capture());
 
         Vehicle savedVehicle = vehicleCaptor.getValue();
         assertThat(savedVehicle.isActive()).isFalse();
+        assertThat(result.active()).isFalse();
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseC
 import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
+import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleStatusRequest;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.response.VehicleResponse;
 
 import jakarta.validation.Valid;
@@ -80,39 +81,43 @@ public class VehicleRestAdapter {
     }
 
     /**
-     * Baja logica de un vehiculo (legacy endpoint)
+     * Alta o baja logica de un vehiculo segun el cuerpo recibido (cumpliendo openapi.yml)
      * PATCH /v1/vehicles/{id}/status
      *
-     * 204 No Content -> vehiculo desactivado
+     * 200 OK -> estado actualizado (devuelve VehicleResponse)
+     * 400 Bad Request -> cuerpo invalido (ej. active ausente)
      * 404 Not Found  -> no existe vehiculo con ese id (VehicleNotFoundException)
      */
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deactivateVehicle(@PathVariable UUID id) {
-        deleteVehicleUseCase.deactivate(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<VehicleResponse> changeVehicleStatus(@PathVariable UUID id,
+                                                               @Valid @RequestBody VehicleStatusRequest request) {
+        VehicleDTO updatedVehicle = Boolean.TRUE.equals(request.active)
+                ? activateVehicleUseCase.activate(id)
+                : deleteVehicleUseCase.deactivate(id);
+        return ResponseEntity.ok(mapper.toResponse(updatedVehicle));
     }
 
     /**
-     * Baja logica de un vehiculo
+     * Baja logica de un vehiculo (endpoint auxiliar)
      * PATCH /v1/vehicles/{id}/deactivate
      */
     @PatchMapping("/{id}/deactivate")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deactivateVehicleExplicit(@PathVariable UUID id) {
-        deleteVehicleUseCase.deactivate(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<VehicleResponse> deactivateVehicleExplicit(@PathVariable UUID id) {
+        VehicleDTO updatedVehicle = deleteVehicleUseCase.deactivate(id);
+        return ResponseEntity.ok(mapper.toResponse(updatedVehicle));
     }
 
     /**
-     * Alta logica de un vehiculo
+     * Alta logica de un vehiculo (endpoint auxiliar)
      * PATCH /v1/vehicles/{id}/activate
      */
     @PatchMapping("/{id}/activate")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> activateVehicle(@PathVariable UUID id) {
-        activateVehicleUseCase.activate(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<VehicleResponse> activateVehicle(@PathVariable UUID id) {
+        VehicleDTO updatedVehicle = activateVehicleUseCase.activate(id);
+        return ResponseEntity.ok(mapper.toResponse(updatedVehicle));
     }
 
     @PutMapping("/{id}")

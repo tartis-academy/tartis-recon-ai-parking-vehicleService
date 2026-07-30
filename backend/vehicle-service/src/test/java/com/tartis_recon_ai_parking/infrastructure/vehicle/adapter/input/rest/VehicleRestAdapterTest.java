@@ -11,6 +11,7 @@ import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseC
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleRequest;
+import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.request.VehicleStatusRequest;
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.response.VehicleResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -317,48 +318,85 @@ class VehicleRestAdapterTest {
     }
 
     @Test
-    @DisplayName("Debe desactivar un vehiculo logicamente y retornar 204 No Content")
-    void shouldDeactivateVehicleSuccessfully() throws Exception {
-        // QUE HACE:
-        // - Genera un ID aleatorio.
-        // - Realiza una llamada PATCH a /v1/vehicles/{id}/status.
+    @DisplayName("Debe desactivar un vehiculo a traves de PATCH /v1/vehicles/{id}/status con active=false y retornar 200 OK")
+    void shouldDeactivateVehicleStatusSuccessfully() throws Exception {
         UUID id = UUID.randomUUID();
-        doNothing().when(deleteVehicleUseCase).deactivate(id);
+        VehicleDTO dto = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, false);
+        VehicleResponse response = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, false);
 
-        // QUE DEBERIA HACER:
-        // Debe retornar 204 No Content y verificar que se llamo a deleteVehicleUseCase.deactivate().
+        when(deleteVehicleUseCase.deactivate(id)).thenReturn(dto);
+        when(vehicleRestMapper.toResponse(dto)).thenReturn(response);
+
+        VehicleStatusRequest request = new VehicleStatusRequest(false);
+
         mockMvc.perform(patch("/v1/vehicles/{id}/status", id)
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uniqueId").value(id.toString()))
+                .andExpect(jsonPath("$.active").value(false));
 
         verify(deleteVehicleUseCase, times(1)).deactivate(id);
     }
 
     @Test
-    @DisplayName("Debe desactivar un vehiculo a traves del endpoint explícito /deactivate y retornar 204 No Content")
+    @DisplayName("Debe activar un vehiculo a traves de PATCH /v1/vehicles/{id}/status con active=true y retornar 200 OK")
+    void shouldActivateVehicleStatusSuccessfully() throws Exception {
+        UUID id = UUID.randomUUID();
+        VehicleDTO dto = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse response = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+
+        when(activateVehicleUseCase.activate(id)).thenReturn(dto);
+        when(vehicleRestMapper.toResponse(dto)).thenReturn(response);
+
+        VehicleStatusRequest request = new VehicleStatusRequest(true);
+
+        mockMvc.perform(patch("/v1/vehicles/{id}/status", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uniqueId").value(id.toString()))
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(activateVehicleUseCase, times(1)).activate(id);
+    }
+
+    @Test
+    @DisplayName("Debe desactivar un vehiculo a traves del endpoint explícito /deactivate y retornar 200 OK")
     void shouldDeactivateVehicleExplicitlySuccessfully() throws Exception {
         UUID id = UUID.randomUUID();
-        doNothing().when(deleteVehicleUseCase).deactivate(id);
+        VehicleDTO dto = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, false);
+        VehicleResponse response = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, false);
+
+        when(deleteVehicleUseCase.deactivate(id)).thenReturn(dto);
+        when(vehicleRestMapper.toResponse(dto)).thenReturn(response);
 
         mockMvc.perform(patch("/v1/vehicles/{id}/deactivate", id)
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
 
         verify(deleteVehicleUseCase, times(1)).deactivate(id);
     }
 
     @Test
-    @DisplayName("Debe activar un vehiculo a traves del endpoint /activate y retornar 204 No Content")
+    @DisplayName("Debe activar un vehiculo a traves del endpoint /activate y retornar 200 OK")
     void shouldActivateVehicleSuccessfully() throws Exception {
         UUID id = UUID.randomUUID();
-        doNothing().when(activateVehicleUseCase).activate(id);
+        VehicleDTO dto = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse response = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+
+        when(activateVehicleUseCase.activate(id)).thenReturn(dto);
+        when(vehicleRestMapper.toResponse(dto)).thenReturn(response);
 
         mockMvc.perform(patch("/v1/vehicles/{id}/activate", id)
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(true));
 
         verify(activateVehicleUseCase, times(1)).activate(id);
     }
@@ -481,9 +519,11 @@ class VehicleRestAdapterTest {
     @DisplayName("OPERARIO: Debe denegar la desactivacion de un vehiculo (403)")
     void shouldDenyDeactivateVehicleForOperario() throws Exception {
         UUID id = UUID.randomUUID();
+        VehicleStatusRequest request = new VehicleStatusRequest(false);
         mockMvc.perform(patch("/v1/vehicles/{id}/status", id)
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
-                .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
         verify(deleteVehicleUseCase, never()).deactivate(any());
     }
@@ -562,9 +602,11 @@ class VehicleRestAdapterTest {
     @DisplayName("USER: Debe denegar la desactivacion de un vehiculo (403)")
     void shouldDenyDeactivateVehicleForUser() throws Exception {
         UUID id = UUID.randomUUID();
+        VehicleStatusRequest request = new VehicleStatusRequest(false);
         mockMvc.perform(patch("/v1/vehicles/{id}/status", id)
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
-                .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
     }
 
