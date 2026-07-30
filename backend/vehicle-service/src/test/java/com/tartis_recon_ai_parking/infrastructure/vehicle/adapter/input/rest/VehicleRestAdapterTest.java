@@ -19,10 +19,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.web.servlet.MockMvc;
-
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.test.context.support.WithMockUser;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -38,17 +39,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(VehicleRestAdapter.class)
 class VehicleRestAdapterTest {
 
-    // MockMvc: Permite realizar llamadas HTTP simuladas (GET, POST, etc.) a los endpoints
+    // MockMvc: Permite realizar llamadas HTTP simuladas (GET, POST, etc.) a los
+    // endpoints
     // y verificar los codigos de estado, las cabeceras y el cuerpo de la respuesta.
     @Autowired
     private MockMvc mockMvc;
 
-    // ObjectMapper: Utilizado para convertir objetos Java a JSON (serializacion) y viceversa.
+    // ObjectMapper: Utilizado para convertir objetos Java a JSON (serializacion) y
+    // viceversa.
     @Autowired
     private ObjectMapper objectMapper;
 
-    // @MockitoBean: Registra un Mock en el contexto de Spring. Reemplaza el bean real por un simulacro
-    // de Mockito, permitiendo definir su comportamiento y verificar sus invocaciones.
+    // @MockitoBean: Registra un Mock en el contexto de Spring. Reemplaza el bean
+    // real por un simulacro
+    // de Mockito, permitiendo definir su comportamiento y verificar sus
+    // invocaciones.
     @MockitoBean
     private CreateVehicleUseCase createVehicleUseCase;
 
@@ -88,7 +93,8 @@ class VehicleRestAdapterTest {
         when(vehicleRestMapper.toResponseList(dtoList)).thenReturn(responseList);
 
         // QUE DEBERIA HACER:
-        // Debe retornar estado 200 OK con la representacion JSON de la lista de vehiculos
+        // Debe retornar estado 200 OK con la representacion JSON de la lista de
+        // vehiculos
         // y comprobar que la longitud de la lista es 2 y que los campos coinciden.
         mockMvc.perform(get("/v1/vehicles")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -107,19 +113,22 @@ class VehicleRestAdapterTest {
     @DisplayName("Debe obtener un vehiculo por su ID correctamente con estado 200 OK")
     void shouldGetVehicleByIdSuccessfully() throws Exception {
         // QUE HACE:
-        // - Genera un ID aleatorio y simula el VehicleDTO devuelto por el caso de uso y su DTO de respuesta.
+        // - Genera un ID aleatorio y simula el VehicleDTO devuelto por el caso de uso y
+        // su DTO de respuesta.
         // - Configura getVehicleUseCase para devolver el DTO al buscar por ese ID.
         // - Configura el mapper para convertirlo en su correspondiente respuesta.
         // - Realiza una peticion GET a /v1/vehicles/{id}
         UUID id = UUID.randomUUID();
         VehicleDTO vehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
         when(getVehicleUseCase.getById(id)).thenReturn(vehicle);
         when(vehicleRestMapper.toResponse(vehicle)).thenReturn(responseDto);
 
         // QUE DEBERIA HACER:
-        // Debe responder con 200 OK y el cuerpo JSON con los datos correctos del vehiculo.
+        // Debe responder con 200 OK y el cuerpo JSON con los datos correctos del
+        // vehiculo.
         mockMvc.perform(get("/v1/vehicles/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -142,7 +151,8 @@ class VehicleRestAdapterTest {
         when(getVehicleUseCase.getById(id)).thenThrow(new VehicleNotFoundException("ID", id));
 
         // QUE DEBERIA HACER:
-        // Debe retornar estado 404 Not Found con el mensaje correspondiente en el cuerpo.
+        // Debe retornar estado 404 Not Found con el mensaje correspondiente en el
+        // cuerpo.
         mockMvc.perform(get("/v1/vehicles/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -156,18 +166,21 @@ class VehicleRestAdapterTest {
     void shouldGetVehicleByPlateSuccessfully() throws Exception {
         // QUE HACE:
         // - Genera un ID, el VehicleDTO devuelto por el caso de uso y su respuesta.
-        // - Configura getVehicleUseCase para devolverlo al buscar por la matricula "1234ABC".
+        // - Configura getVehicleUseCase para devolverlo al buscar por la matricula
+        // "1234ABC".
         // - Configura el mapper.
         // - Realiza una peticion GET a /v1/vehicles/plate/1234ABC
         UUID id = UUID.randomUUID();
         VehicleDTO vehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
         when(getVehicleUseCase.getByPlate("1234ABC")).thenReturn(vehicle);
         when(vehicleRestMapper.toResponse(vehicle)).thenReturn(responseDto);
 
         // QUE DEBERIA HACER:
-        // Debe responder con 200 OK y el cuerpo JSON conteniendo la informacion del vehiculo.
+        // Debe responder con 200 OK y el cuerpo JSON conteniendo la informacion del
+        // vehiculo.
         mockMvc.perform(get("/v1/vehicles/plate/1234ABC")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -180,7 +193,8 @@ class VehicleRestAdapterTest {
     @DisplayName("Debe retornar 404 Not Found cuando la matricula no existe")
     void shouldReturn404WhenPlateNotFound() throws Exception {
         // QUE HACE:
-        // - Configura getVehicleUseCase para lanzar VehicleNotFoundException con la matricula "9999XYZ".
+        // - Configura getVehicleUseCase para lanzar VehicleNotFoundException con la
+        // matricula "9999XYZ".
         // - Realiza la llamada GET a /v1/vehicles/plate/9999XYZ
         when(getVehicleUseCase.getByPlate("9999XYZ")).thenThrow(new VehicleNotFoundException("plate", "9999XYZ"));
 
@@ -199,7 +213,8 @@ class VehicleRestAdapterTest {
     void shouldCreateVehicleSuccessfully() throws Exception {
         // QUE HACE:
         // - Prepara el request DTO con datos validos.
-        // - Simula la traduccion del request al DTO de aplicacion y la respuesta del caso de uso.
+        // - Simula la traduccion del request al DTO de aplicacion y la respuesta del
+        // caso de uso.
         // - Envia una peticion POST serializando el request.
         VehicleRequest request = new VehicleRequest();
         request.type = "CAR";
@@ -213,16 +228,19 @@ class VehicleRestAdapterTest {
         UUID id = UUID.randomUUID();
         VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false);
         VehicleDTO savedVehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
-        // any(VehicleRequest.class) y no el objeto 'request': Spring deserializa el JSON en una
+        // any(VehicleRequest.class) y no el objeto 'request': Spring deserializa el
+        // JSON en una
         // instancia distinta y VehicleRequest no implementa equals().
         when(vehicleRestMapper.toCreateDTO(any(VehicleRequest.class))).thenReturn(createDTO);
         when(createVehicleUseCase.execute(createDTO)).thenReturn(savedVehicle);
         when(vehicleRestMapper.toResponse(savedVehicle)).thenReturn(responseDto);
 
         // QUE DEBERIA HACER:
-        // Debe retornar 201 Created con el DTO mapeado que incluye el identificador unico generado.
+        // Debe retornar 201 Created con el DTO mapeado que incluye el identificador
+        // unico generado.
         mockMvc.perform(post("/v1/vehicles")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -237,9 +255,12 @@ class VehicleRestAdapterTest {
     @DisplayName("Debe lanzar 400 Bad Request si el tipo de vehiculo no es valido al crear")
     void shouldReturn400WhenCreateWithInvalidType() throws Exception {
         // QUE HACE:
-        // - Prepara un request con un tipo de vehiculo no contemplado en el enum (ej: "HELICOPTER").
-        // - Simula que el caso de uso rechaza ese tipo: tras el refactor la conversion a enum
-        //   ocurre en VehicleDTOFactory, dentro de la capa de aplicacion, y ya no en el controlador.
+        // - Prepara un request con un tipo de vehiculo no contemplado en el enum (ej:
+        // "HELICOPTER").
+        // - Simula que el caso de uso rechaza ese tipo: tras el refactor la conversion
+        // a enum
+        // ocurre en VehicleDTOFactory, dentro de la capa de aplicacion, y ya no en el
+        // controlador.
         // - Lanza la peticion POST.
         VehicleRequest request = new VehicleRequest();
         request.type = "HELICOPTER";
@@ -250,7 +271,8 @@ class VehicleRestAdapterTest {
         request.numDoors = 4;
         request.hasSidecar = false;
 
-        VehicleCreateDTO createDTO = new VehicleCreateDTO("HELICOPTER", "1234ABC", "Toyota", "Corolla", "Red", 4, false);
+        VehicleCreateDTO createDTO = new VehicleCreateDTO("HELICOPTER", "1234ABC", "Toyota", "Corolla", "Red", 4,
+                false);
 
         when(vehicleRestMapper.toCreateDTO(any(VehicleRequest.class))).thenReturn(createDTO);
         when(createVehicleUseCase.execute(createDTO))
@@ -284,7 +306,8 @@ class VehicleRestAdapterTest {
         request.hasSidecar = false;
 
         // QUE DEBERIA HACER:
-        // Spring Boot interceptara la peticion por el validador @Valid y devolvera 400 Bad Request
+        // Spring Boot interceptara la peticion por el validador @Valid y devolvera 400
+        // Bad Request
         // sin llegar a ejecutar el caso de uso.
         mockMvc.perform(post("/v1/vehicles")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -304,7 +327,8 @@ class VehicleRestAdapterTest {
         doNothing().when(deleteVehicleUseCase).deactivate(id);
 
         // QUE DEBERIA HACER:
-        // Debe retornar 204 No Content y verificar que se llamo a deleteVehicleUseCase.deactivate().
+        // Debe retornar 204 No Content y verificar que se llamo a
+        // deleteVehicleUseCase.deactivate().
         mockMvc.perform(patch("/v1/vehicles/{id}/status", id)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
@@ -331,14 +355,16 @@ class VehicleRestAdapterTest {
 
         VehicleCreateDTO createDTO = new VehicleCreateDTO("CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false);
         VehicleDTO updatedVehicle = new VehicleDTO(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
-        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        VehicleResponse responseDto = new VehicleResponse(id, "CAR", "1234ABC", "Toyota", "Corolla", "Red", 4, false,
+                true);
 
         when(vehicleRestMapper.toCreateDTO(any(VehicleRequest.class))).thenReturn(createDTO);
         when(updateVehicleUseCase.execute(id, createDTO)).thenReturn(updatedVehicle);
         when(vehicleRestMapper.toResponse(updatedVehicle)).thenReturn(responseDto);
 
         // QUE DEBERIA HACER:
-        // Debe retornar 200 OK con los datos actualizados del vehiculo, pasando al caso de uso
+        // Debe retornar 200 OK con los datos actualizados del vehiculo, pasando al caso
+        // de uso
         // el id de la URL y el cuerpo por separado.
         mockMvc.perform(put("/v1/vehicles/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -351,34 +377,36 @@ class VehicleRestAdapterTest {
     }
 
     @Test
-@DisplayName("Debe responder 409 Conflict cuando se intenta actualizar un vehiculo con una version desactualizada")
-void shouldReturn409ConflictWhenUpdatingWithOutdatedVersion() throws Exception {
-    // Arrange
-    UUID id = UUID.randomUUID();
-    
-    // Request enviado por el cliente con versión antigua (ej. version 0)
-    String requestJson = """
-        {
-            "version": 0,
-            "type": "CAR",
-            "plate": "1234BCD",
-            "brand": "Toyota",
-            "model": "Corolla",
-            "color": "Red",
-            "numDoors": 4,
-            "hasSidecar": false
-        }
-        """;
+    @DisplayName("Debe responder 409 Conflict cuando se intenta actualizar un vehiculo con una version desactualizada")
+    @WithMockUser
+    void shouldReturn409ConflictWhenUpdatingWithOutdatedVersion() throws Exception {
+        // Arrange
+        UUID id = UUID.randomUUID();
 
-    // Simular que el UseCase/Repositorio lanza la excepción de bloqueo optimista al intentar persistir
-    when(updateVehicleUseCase.execute(eq(id), any()))
-            .thenThrow(new ObjectOptimisticLockingFailureException("VehicleEntity", id));
+        // Request enviado por el cliente con versión antigua (ej. version 0)
+        String requestJson = """
+                {
+                    "version": 0,
+                    "type": "CAR",
+                    "plate": "1234BCD",
+                    "brand": "Toyota",
+                    "model": "Corolla",
+                    "color": "Red",
+                    "numDoors": 4,
+                    "hasSidecar": false
+                }
+                """;
 
-    // Act & Assert
-    mockMvc.perform(put("/v1/vehicles/{id}", id)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(requestJson))
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.status").value(409));
-}
+        // Simular que el UseCase/Repositorio lanza la excepción de bloqueo optimista al
+        // intentar persistir
+        when(updateVehicleUseCase.execute(eq(id), any()))
+                .thenThrow(new ObjectOptimisticLockingFailureException("VehicleEntity", id));
+
+        // Act & Assert
+        mockMvc.perform(put("/v1/vehicles/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+    }
 }
