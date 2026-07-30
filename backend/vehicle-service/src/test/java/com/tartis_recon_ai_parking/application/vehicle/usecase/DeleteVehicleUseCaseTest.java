@@ -64,6 +64,23 @@ class DeleteVehicleUseCaseTest {
     }
 
     @Test
+    @DisplayName("Debe mantener active=false de forma idempotente al desactivar un vehiculo ya inactivo")
+    void shouldMaintainActiveFalseWhenVehicleAlreadyInactive() throws VehicleNotFoundException {
+        UUID id = UUID.randomUUID();
+        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
+
+        when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
+
+        deleteVehicleUseCase.deactivate(id);
+
+        ArgumentCaptor<Vehicle> vehicleCaptor = ArgumentCaptor.forClass(Vehicle.class);
+        verify(vehiclePersistence, times(1)).save(vehicleCaptor.capture());
+
+        Vehicle savedVehicle = vehicleCaptor.getValue();
+        assertThat(savedVehicle.isActive()).isFalse();
+    }
+
+    @Test
     @DisplayName("Debe lanzar VehicleNotFoundException al desactivar si el vehiculo no existe")
     void shouldThrowExceptionWhenDeactivatingNonExistentVehicle() {
         // QUE HACE:

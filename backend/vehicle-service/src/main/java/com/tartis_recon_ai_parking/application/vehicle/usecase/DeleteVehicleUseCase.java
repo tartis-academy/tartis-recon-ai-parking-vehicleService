@@ -25,7 +25,7 @@ public class DeleteVehicleUseCase {
         Vehicle vehicle = persistence.findById(id)
         .orElseThrow(() -> new VehicleNotFoundException("ID", id));
 
-        // 2. El dominio aplica el cambio de estado.
+        // 2. El dominio aplica el cambio de estado (desactivación idempotente).
         vehicle = vehicle.deactivate();
 
         // 3. Persistimos. Sin este save() el cambio se queda en memoria:

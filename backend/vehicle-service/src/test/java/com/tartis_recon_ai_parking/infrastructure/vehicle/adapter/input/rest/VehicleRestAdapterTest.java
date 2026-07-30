@@ -3,6 +3,7 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest;
 import tools.jackson.databind.ObjectMapper;
 import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleCreateDTO;
 import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
+import com.tartis_recon_ai_parking.application.vehicle.usecase.ActivateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
@@ -64,6 +65,9 @@ class VehicleRestAdapterTest {
 
     @MockitoBean
     private DeleteVehicleUseCase deleteVehicleUseCase;
+
+    @MockitoBean
+    private ActivateVehicleUseCase activateVehicleUseCase;
 
     @MockitoBean
     private UpdateVehicleUseCase updateVehicleUseCase;
@@ -329,6 +333,34 @@ class VehicleRestAdapterTest {
                 .andExpect(status().isNoContent());
 
         verify(deleteVehicleUseCase, times(1)).deactivate(id);
+    }
+
+    @Test
+    @DisplayName("Debe desactivar un vehiculo a traves del endpoint explícito /deactivate y retornar 204 No Content")
+    void shouldDeactivateVehicleExplicitlySuccessfully() throws Exception {
+        UUID id = UUID.randomUUID();
+        doNothing().when(deleteVehicleUseCase).deactivate(id);
+
+        mockMvc.perform(patch("/v1/vehicles/{id}/deactivate", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(deleteVehicleUseCase, times(1)).deactivate(id);
+    }
+
+    @Test
+    @DisplayName("Debe activar un vehiculo a traves del endpoint /activate y retornar 204 No Content")
+    void shouldActivateVehicleSuccessfully() throws Exception {
+        UUID id = UUID.randomUUID();
+        doNothing().when(activateVehicleUseCase).activate(id);
+
+        mockMvc.perform(patch("/v1/vehicles/{id}/activate", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(activateVehicleUseCase, times(1)).activate(id);
     }
 
     @Test

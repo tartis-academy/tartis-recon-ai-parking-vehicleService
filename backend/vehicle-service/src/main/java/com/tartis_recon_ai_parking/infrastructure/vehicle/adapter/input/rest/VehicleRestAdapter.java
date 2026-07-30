@@ -3,6 +3,7 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest;
 import java.util.UUID;
 
 import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
+import com.tartis_recon_ai_parking.application.vehicle.usecase.ActivateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.CreateVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
@@ -31,17 +32,20 @@ public class VehicleRestAdapter {
 
     private final CreateVehicleUseCase createVehicleUseCase;
     private final DeleteVehicleUseCase deleteVehicleUseCase;
+    private final ActivateVehicleUseCase activateVehicleUseCase;
     private final UpdateVehicleUseCase updateVehicleUseCase;
     private final GetVehicleUseCase getVehicleUseCase;
     private final VehicleRestMapper mapper;
 
     public VehicleRestAdapter(CreateVehicleUseCase createVehicleUseCase,
                               DeleteVehicleUseCase deleteVehicleUseCase,
+                              ActivateVehicleUseCase activateVehicleUseCase,
                               UpdateVehicleUseCase updateVehicleUseCase,
                               GetVehicleUseCase getVehicleUseCase,
                               VehicleRestMapper mapper) {
         this.createVehicleUseCase = createVehicleUseCase;
         this.deleteVehicleUseCase = deleteVehicleUseCase;
+        this.activateVehicleUseCase = activateVehicleUseCase;
         this.updateVehicleUseCase = updateVehicleUseCase;
         this.getVehicleUseCase = getVehicleUseCase;
         this.mapper = mapper;
@@ -76,7 +80,7 @@ public class VehicleRestAdapter {
     }
 
     /**
-     * Baja logica de un vehiculo
+     * Baja logica de un vehiculo (legacy endpoint)
      * PATCH /v1/vehicles/{id}/status
      *
      * 204 No Content -> vehiculo desactivado
@@ -86,6 +90,28 @@ public class VehicleRestAdapter {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deactivateVehicle(@PathVariable UUID id) {
         deleteVehicleUseCase.deactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Baja logica de un vehiculo
+     * PATCH /v1/vehicles/{id}/deactivate
+     */
+    @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deactivateVehicleExplicit(@PathVariable UUID id) {
+        deleteVehicleUseCase.deactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Alta logica de un vehiculo
+     * PATCH /v1/vehicles/{id}/activate
+     */
+    @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> activateVehicle(@PathVariable UUID id) {
+        activateVehicleUseCase.activate(id);
         return ResponseEntity.noContent().build();
     }
 
