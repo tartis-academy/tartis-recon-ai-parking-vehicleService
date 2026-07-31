@@ -132,4 +132,34 @@ class CustomizedExceptionAdapterTest {
         assertEquals("An unexpected database failure occurred. The request could not be processed.", response.getDetail());
         assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
     }
+
+    @Test
+    void testHandleUnauthorized() {
+        org.springframework.security.authentication.BadCredentialsException ex =
+                new org.springframework.security.authentication.BadCredentialsException("Invalid token");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ProblemDetail response = adapter.handleUnauthorized(ex, request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED.value(), response.getStatus());
+        assertEquals("Unauthorized Access", response.getTitle());
+        assertEquals("Authentication token is missing, invalid, or expired.", response.getDetail());
+        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+    }
+
+    @Test
+    void testHandleAccessDenied() {
+        org.springframework.security.access.AccessDeniedException ex =
+                new org.springframework.security.access.AccessDeniedException("Forbidden");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ProblemDetail response = adapter.handleAccessDenied(ex, request);
+
+        assertEquals(HttpStatus.FORBIDDEN.value(), response.getStatus());
+        assertEquals("Forbidden Access", response.getTitle());
+        assertEquals("You do not have permission to perform this action.", response.getDetail());
+        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+    }
 }

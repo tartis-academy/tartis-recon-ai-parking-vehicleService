@@ -32,7 +32,7 @@ class ActivateVehicleUseCaseTest {
     @DisplayName("Debe activar el vehiculo (active=true) y guardar si el vehiculo existe inactivo")
     void shouldActivateVehicleSuccessfully() throws VehicleNotFoundException {
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
 
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
 
@@ -49,7 +49,7 @@ class ActivateVehicleUseCaseTest {
     @DisplayName("Debe mantener active=true de forma idempotente al activar un vehiculo ya activo")
     void shouldMaintainActiveTrueWhenVehicleAlreadyActive() throws VehicleNotFoundException {
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
 
