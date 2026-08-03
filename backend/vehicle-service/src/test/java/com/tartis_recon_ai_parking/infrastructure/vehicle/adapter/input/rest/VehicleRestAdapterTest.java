@@ -456,6 +456,64 @@ class VehicleRestAdapterTest {
         verify(getVehicleUseCase, never()).execute();
     }
 
+    @Test
+    @DisplayName("Debe rechazar con 401 POST /v1/vehicles sin token")
+    void shouldReturn401OnCreateWithoutToken() throws Exception {
+        VehicleRequest request = new VehicleRequest();
+        request.type = "CAR";
+        request.plate = "1234ABC";
+        mockMvc.perform(post("/v1/vehicles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+
+        verify(createVehicleUseCase, never()).execute(any());
+    }
+
+    @Test
+    @DisplayName("Debe rechazar con 401 GET /v1/vehicles/{id} sin token")
+    void shouldReturn401OnGetByIdWithoutToken() throws Exception {
+        mockMvc.perform(get("/v1/vehicles/{id}", UUID.randomUUID()))
+                .andExpect(status().isUnauthorized());
+
+        verify(getVehicleUseCase, never()).getById(any());
+    }
+
+    @Test
+    @DisplayName("Debe rechazar con 401 PUT /v1/vehicles/{id} sin token")
+    void shouldReturn401OnUpdateWithoutToken() throws Exception {
+        VehicleRequest request = new VehicleRequest();
+        request.type = "CAR";
+        request.plate = "1234ABC";
+        mockMvc.perform(put("/v1/vehicles/{id}", UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+
+        verify(updateVehicleUseCase, never()).execute(any(), any());
+    }
+
+    @Test
+    @DisplayName("Debe rechazar con 401 GET /v1/vehicles/plate/{plate} sin token")
+    void shouldReturn401OnGetByPlateWithoutToken() throws Exception {
+        mockMvc.perform(get("/v1/vehicles/plate/1234ABC"))
+                .andExpect(status().isUnauthorized());
+
+        verify(getVehicleUseCase, never()).getByPlate(any());
+    }
+
+    @Test
+    @DisplayName("Debe rechazar con 401 PATCH /v1/vehicles/{id}/status sin token")
+    void shouldReturn401OnStatusChangeWithoutToken() throws Exception {
+        VehicleStatusRequest request = new VehicleStatusRequest(false);
+        mockMvc.perform(patch("/v1/vehicles/{id}/status", UUID.randomUUID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(activateVehicleUseCase);
+    }
+
     // --- SEC-10: pruebas de autorizacion fina para el rol OPERARIO ---
 
     @Test
