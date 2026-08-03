@@ -9,26 +9,26 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Transactional
-public class DeleteVehicleUseCase {
+public class ActivateVehicleUseCase {
 
     private final VehiclePersistence persistence;
 
-    public DeleteVehicleUseCase(VehiclePersistence persistence) {
+    public ActivateVehicleUseCase(VehiclePersistence persistence) {
         this.persistence = persistence;
     }
 
     /**
-     * Desactiva el vehiculo identificado por su id de forma idempotente.
+     * Activa el vehiculo identificado por su id de forma idempotente.
      *
      * @param id identificador unico del vehiculo
      * @return VehicleDTO con el estado actualizado
-     * @throws VehicleNotFoundException si no existe ningun vehiculo con ese id (CA7)
+     * @throws VehicleNotFoundException si no existe ningun vehiculo con ese id
      */
-    public VehicleDTO deactivate(UUID id) {
+    public VehicleDTO activate(UUID id) {
         Vehicle vehicle = persistence.findById(id)
                 .orElseThrow(() -> new VehicleNotFoundException("ID", id));
 
-        vehicle = vehicle.deactivate();
+        vehicle = vehicle.activate();
         Vehicle savedVehicle = persistence.save(vehicle);
         return VehicleDTOFactory.toDTO(savedVehicle);
     }

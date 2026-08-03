@@ -48,7 +48,7 @@ public final class VehicleDTOFactory {
         try {
             return VehicleType.valueOf(type);
         } catch (IllegalArgumentException | NullPointerException e) {
-            throw new InvalidVehicleException("Tipo de vehículo inválido: " + type);
+            throw new InvalidVehicleException("VehicleType", type);
         }
     }
 

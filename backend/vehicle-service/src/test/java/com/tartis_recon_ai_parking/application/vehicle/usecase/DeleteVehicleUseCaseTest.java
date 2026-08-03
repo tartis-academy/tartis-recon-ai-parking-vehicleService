@@ -1,9 +1,9 @@
 package com.tartis_recon_ai_parking.application.vehicle.usecase;
 
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.VehicleType;
-import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,32 +36,45 @@ class DeleteVehicleUseCaseTest {
 
     @Test
     @DisplayName("Debe desactivar el vehiculo (active=false) y guardar si el vehiculo existe")
-    void shouldDeactivateVehicleSuccessfully() throws InvalidVehicleException, VehicleNotFoundException {
+    void shouldDeactivateVehicleSuccessfully() throws VehicleNotFoundException {
         // QUE HACE:
         // 1. Instancia un objeto Vehicle activo.
         // 2. Configura el mock para retornar ese vehiculo al buscarlo por su ID.
         // 3. Ejecuta la desactivacion a traves del caso de uso.
         UUID id = UUID.randomUUID();
-        Vehicle vehicle = Vehicle.reconstruct(id, VehicleType.CAR, "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+        Vehicle vehicle = Vehicle.reconstruct(id,1L,VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, true);
 
         // when(...).thenReturn(...): Indica al mock: "Cuando te llamen con estos parametros, responde esto".
         when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
+        when(vehiclePersistence.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        deleteVehicleUseCase.deactivate(id);
+        VehicleDTO result = deleteVehicleUseCase.deactivate(id);
 
-        // QUE DEBERIA HACER:
-        // Debe recuperar el vehiculo de base de datos, establecer 'active' en false,
-        // llamar al metodo save para persistir el cambio y asegurar mediante un ArgumentCaptor 
-        // de Mockito que el estado del vehiculo enviado a persistir tiene 'active = false'.
-        
-        // ArgumentCaptor: Es una herramienta que te permite "atrapar" el objeto que el caso de uso envio 
-        // al mock para guardarlo (en el metodo save). Esto te permite validar si el caso de uso modifico los 
-        // datos de la forma deseada (en este caso, comprobar que seteo active a false).
         ArgumentCaptor<Vehicle> vehicleCaptor = ArgumentCaptor.forClass(Vehicle.class);
         verify(vehiclePersistence, times(1)).save(vehicleCaptor.capture());
         
         Vehicle savedVehicle = vehicleCaptor.getValue();
         assertThat(savedVehicle.isActive()).isFalse();
+        assertThat(result.active()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Debe mantener active=false de forma idempotente al desactivar un vehiculo ya inactivo")
+    void shouldMaintainActiveFalseWhenVehicleAlreadyInactive() throws VehicleNotFoundException {
+        UUID id = UUID.randomUUID();
+        Vehicle vehicle = Vehicle.reconstruct(id, 1L, VehicleType.CAR, "1234BCD", "Toyota", "Corolla", "Red", 4, false, false);
+
+        when(vehiclePersistence.findById(id)).thenReturn(Optional.of(vehicle));
+        when(vehiclePersistence.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        VehicleDTO result = deleteVehicleUseCase.deactivate(id);
+
+        ArgumentCaptor<Vehicle> vehicleCaptor = ArgumentCaptor.forClass(Vehicle.class);
+        verify(vehiclePersistence, times(1)).save(vehicleCaptor.capture());
+
+        Vehicle savedVehicle = vehicleCaptor.getValue();
+        assertThat(savedVehicle.isActive()).isFalse();
+        assertThat(result.active()).isFalse();
     }
 
     @Test
@@ -81,7 +94,7 @@ class DeleteVehicleUseCaseTest {
         // nunca se invoque el metodo 'save' de la base de datos.
         assertThatThrownBy(() -> deleteVehicleUseCase.deactivate(id))
                 .isInstanceOf(VehicleNotFoundException.class)
-                .hasMessageContaining("Vehículo no encontrado con id: " + id);
+                .hasMessageContaining("Vehicle with 'ID = " + id + "' couldn't be found.");
 
         verify(vehiclePersistence, never()).save(any(Vehicle.class));
     }

@@ -2,6 +2,11 @@ package com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.output.persis
 
 import com.tartis_recon_ai_parking.application.vehicle.port.output.VehiclePersistence;
 import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
+import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleConcurrentModificationException;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.List;
@@ -18,11 +23,28 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
         this.vehiclePersistenceMapper = vehiclePersistenceMapper;
     }
 
-    @Override
+@Override
     public Vehicle save(Vehicle vehicle) {
         VehicleEntity entity = vehiclePersistenceMapper.toEntity(vehicle);
-        VehicleEntity savedEntity = vehicleRepository.save(entity);
-        return vehiclePersistenceMapper.toDomain(savedEntity);
+        try {
+            // saveAndFlush obliga a ejecutar el INSERT/UPDATE ahora mismo, dentro
+            // de este try: con un save() normal el fallo saldria al hacer commit,
+            // fuera del catch, y no se traduciria.
+            VehicleEntity savedEntity = vehicleRepository.saveAndFlush(entity);
+            return vehiclePersistenceMapper.toDomain(savedEntity);
+        } catch (OptimisticLockingFailureException e) {
+            // @Version detecto que otra transaccion modifico la fila entre la
+            // lectura y el guardado. Va antes que DataIntegrityViolationException:
+            // son ramas hermanas de DataAccessException, pero el orden importa si
+            // alguien generaliza el segundo catch en el futuro.
+            throw new VehicleConcurrentModificationException(vehicle.getPlate(), e);
+        } catch (DataIntegrityViolationException e) {
+            // Choque de dos hilos guardando la misma matricula (constraint
+            // vehicles_plate_key). No se filtra por nombre de constraint: la unica
+            // unicidad de esta tabla es la de plate, asi que traducir sin condicion
+            // es correcto.
+            throw new ExistingVehicleException(vehicle.getPlate(), e);
+        }
     }
 
     @Override
