@@ -40,10 +40,11 @@ public class CustomizedExceptionAdapter {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-    // Maneja los intentos de registrar un vehículo que ya existe.
+    // 409, no 400: coincide con openapi.yml y con el otro camino (DataIntegrityViolationException)
+    // por el que llega el mismo error de negocio cuando hay choque de hilos.
     @ExceptionHandler(ExistingVehicleException.class)
     public ProblemDetail handleExisting(ExistingVehicleException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     // Agrupa y formatea los errores de validación de los campos de entrada (@Valid).
