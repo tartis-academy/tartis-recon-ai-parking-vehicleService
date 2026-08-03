@@ -60,10 +60,11 @@ import java.util.stream.Collectors;
  * las cabeceras {@code X-Consumer-*} valen igual para un ADMIN que para un
  * USER. Ver {@code docs/adr/0001} en el repo de infra.
  *
- * <p><strong>Aviso sobre el perfil dev</strong>: {@link SecurityConfigDev} hace
- * {@code anyRequest().permitAll()} sin resource server, asi que en dev nunca
- * hay {@code JwtAuthenticationToken} y este filtro no mete nada. Es correcto y
- * esperado, pero significa que esto solo se valida con Keycloak levantado.
+ * <p><strong>Aviso sobre el perfil dev</strong>: {@code SecurityConfig} no lleva
+ * {@code @Profile}, asi que tambien aplica en dev, y {@code application-dev.properties}
+ * apunta {@code issuer-uri} a un Keycloak real. En dev tambien hace falta
+ * Keycloak levantado y tambien hay {@code JwtAuthenticationToken}; no existe
+ * ningun bypass de resource server para este perfil.
  */
 @Component
 @Order(RequestIdentityFilter.ORDER)
@@ -137,13 +138,6 @@ public class RequestIdentityFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Se ordenan alfabeticamente a proposito: el orden que devuelve Keycloak en
-     * {@code realm_access.roles} no esta garantizado, y sin ordenar la misma
-     * peticion del mismo usuario puede salir como "ADMIN,OPERARIO" o
-     * "OPERARIO,ADMIN" en dos lineas distintas, lo que rompe cualquier
-     * agrupacion posterior sobre el campo.
-     */
-    /**
      * Recoge la identidad del usuario que origino la cadena cuando la llamada
      * viene de otro microservicio.
      *
@@ -169,6 +163,8 @@ public class RequestIdentityFilter extends OncePerRequestFilter {
         }
     }
 
+    // Orden alfabetico: Keycloak no garantiza el orden de realm_access.roles,
+    // y sin ordenar la misma peticion rompe cualquier agrupacion sobre el campo.
     private static String joinRoles(JwtAuthenticationToken jwtAuthentication) {
         return jwtAuthentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)

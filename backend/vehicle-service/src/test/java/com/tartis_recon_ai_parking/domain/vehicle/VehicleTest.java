@@ -180,6 +180,28 @@ class VehicleTest {
                 .hasMessageContaining("Cars do not have sidecar");
     }
 
+    // =============== Tests para activate/deactivate sobre datos legacy ===============
+
+    @Test
+    @DisplayName("Debe poder desactivar un vehiculo reconstruido con matricula de formato antiguo/invalido")
+    void shouldDeactivateVehicleWithLegacyInvalidPlate() {
+        Vehicle vehicle = Vehicle.reconstruct(java.util.UUID.randomUUID(), 1L, VehicleType.CAR,
+                "1234ABC", "Toyota", "Corolla", "Red", 4, false, true);
+
+        assertDoesNotThrow(vehicle::deactivate);
+        assertThat(vehicle.deactivate().isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Debe poder activar un vehiculo reconstruido con brand/model/color nulos")
+    void shouldActivateVehicleWithNullOptionalFields() {
+        Vehicle vehicle = Vehicle.reconstruct(java.util.UUID.randomUUID(), 1L, VehicleType.CAR,
+                "1234BCD", null, null, null, 4, false, false);
+
+        assertDoesNotThrow(vehicle::activate);
+        assertThat(vehicle.activate().isActive()).isTrue();
+    }
+
     // =============== Tests para validPlate ===============
 
     // @ParameterizedTest: Ejecuta el test una vez por cada valor proporcionado en @ValueSource.

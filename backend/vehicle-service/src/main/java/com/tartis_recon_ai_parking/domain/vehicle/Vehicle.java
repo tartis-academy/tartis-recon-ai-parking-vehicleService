@@ -30,6 +30,14 @@ public class Vehicle{
     @SuppressWarnings("java:S107")
     public static Vehicle reconstruct(UUID id, Long version, VehicleType type, String plate, String brand, String model, String color,
         int numDoors, boolean hasSidecar, boolean active){
+            return withFields(id, version, type, plate, brand, model, color, numDoors, hasSidecar, active);
+    }
+
+    // Asigna campos sin pasar por validateData(): usado por reconstruct() y por activate()/deactivate(),
+    // que no deben revalidar una entidad ya persistida solo por cambiar el flag active.
+    @SuppressWarnings("java:S107")
+    private static Vehicle withFields(UUID id, Long version, VehicleType type, String plate, String brand, String model, String color,
+        int numDoors, boolean hasSidecar, boolean active){
             Vehicle v = new Vehicle();
             v.uniqueId = id;
             v.version = version;
@@ -116,12 +124,12 @@ public class Vehicle{
     }
 
     public Vehicle activate(){
-        return new Vehicle(this.uniqueId, this.version, this.type, this.plate, this.brand, 
+        return withFields(this.uniqueId, this.version, this.type, this.plate, this.brand,
             this.model, this.color, this.numDoors, this.hasSidecar, true);
     }
 
     public Vehicle deactivate(){
-        return new Vehicle(this.uniqueId, this.version, this.type, this.plate, this.brand, 
+        return withFields(this.uniqueId, this.version, this.type, this.plate, this.brand,
             this.model, this.color, this.numDoors, this.hasSidecar, false);
     }
 

@@ -95,7 +95,7 @@ class CustomizedExceptionAdapterMvcTest {
     }
 
     @Test
-    void shouldReturn400ProblemDetailWhenExistingVehicleException() throws Exception {
+    void shouldReturn409ProblemDetailWhenExistingVehicleException() throws Exception {
         VehicleRequest request = new VehicleRequest();
         request.type = "CAR";
         request.plate = "1234ABC";
@@ -112,8 +112,8 @@ class CustomizedExceptionAdapterMvcTest {
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.detail").value("There's already a vehicle with the specified plate : 1234ABC"));
     }
 
