@@ -23,7 +23,7 @@ public class VehiclePersistenceAdapter implements VehiclePersistence {
         this.vehiclePersistenceMapper = vehiclePersistenceMapper;
     }
 
-    @Override
+@Override
     public Vehicle save(Vehicle vehicle) {
         VehicleEntity entity = vehiclePersistenceMapper.toEntity(vehicle);
         try {

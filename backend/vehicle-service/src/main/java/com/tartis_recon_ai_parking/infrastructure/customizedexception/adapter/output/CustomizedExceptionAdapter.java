@@ -18,6 +18,8 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.QueryTimeoutException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.net.URI;
@@ -119,6 +121,36 @@ public class CustomizedExceptionAdapter {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected database failure occurred. The request could not be processed.");
         problemDetail.setType(URI.create("https://api.tartis.com/errors/internal-server-error"));
         problemDetail.setTitle("Internal Database Error");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        return problemDetail;
+    }
+
+    // --- MANEJO DE EXCEPCIONES DE SEGURIDAD ---
+
+    /**
+     * HTTP 401 Unauthorized: El token de autenticación está ausente, es inválido o ha caducado.
+     * <p>
+     * Diagnóstico para el equipo: El problema reside en la forma en que el frontend envía el token de autenticación.
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleUnauthorized(AuthenticationException ex, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Authentication token is missing, invalid, or expired.");
+        problemDetail.setType(URI.create("https://api.tartis.com/errors/unauthorized"));
+        problemDetail.setTitle("Unauthorized Access");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        return problemDetail;
+    }
+
+    /**
+     * HTTP 403 Forbidden: El token de autenticación es válido pero el usuario no posee el rol necesario.
+     * <p>
+     * Diagnóstico para el equipo: El problema reside en los roles configurados asignados a la identidad.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "You do not have permission to perform this action.");
+        problemDetail.setType(URI.create("https://api.tartis.com/errors/forbidden"));
+        problemDetail.setTitle("Forbidden Access");
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         return problemDetail;
     }
