@@ -58,8 +58,8 @@ class CustomizedExceptionAdapterTest {
     void testHandleExisting() {
         ExistingVehicleException ex = new ExistingVehicleException("1234ABC");
         ProblemDetail response = adapter.handleExisting(ex);
-        
-        assertEquals(HttpStatus.BAD_REQUEST.value(), response.getStatus());
+
+        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
         assertEquals(ex.getMessage(), response.getDetail());
     }
 
