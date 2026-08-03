@@ -19,6 +19,12 @@ tags:
   - name: vehicles
     description: Vehicle catalogue (CRUD + logical deactivation)
 
+# Todas las operaciones requieren token JWT salvo health check público.
+# SEC-11: el entry point emite WWW-Authenticate y el cuerpo ProblemDetail
+# producido por CustomizedExceptionAdapter.
+security:
+  - bearerAuth: []
+
 paths:
   /vehicles:
     get:
@@ -59,6 +65,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VehiclePage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -85,6 +95,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VehicleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
@@ -110,6 +124,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VehicleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/VehicleNotFound'
         '500':
@@ -139,6 +157,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VehicleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -163,6 +185,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VehicleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: No vehicle registered with that plate
           content:
@@ -196,6 +222,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VehicleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -217,6 +247,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VehicleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/VehicleNotFound'
         '500':
@@ -236,6 +270,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VehicleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/VehicleNotFound'
         '500':
@@ -369,6 +407,32 @@ components:
       maxLength: 7
       example: "1234ABC"
 
+    ProblemDetail:
+      type: object
+      description: >
+        Cuerpo de error real que devuelve CustomizedExceptionAdapter
+        (RFC 8416 / Problem Details for HTTP APIs,
+        application/problem+json). No confundir con ErrorResponse, que es el
+        contrato heredado para 400/404/409 y aún no se ha migrado.
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://api.tartis.com/errors/unauthorized"
+        title:
+          type: string
+          example: "Unauthorized Access"
+        status:
+          type: integer
+          example: 401
+        detail:
+          type: string
+          example: "Authentication token is missing, invalid, or expired."
+        instance:
+          type: string
+          format: uri
+          example: "/v1/vehicles"
+
     ErrorResponse:
       type: object
       properties:
@@ -411,6 +475,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Token ausente, inválido o caducado. Devuelve ProblemDetail (RFC 8416) con header WWW-Authenticate (RFC 6750).
+      headers:
+        WWW-Authenticate:
+          description: >
+            Esquema bearer para que el cliente detecte el 401 como error OAuth2,
+            según RFC 6750 §3.
+          schema:
+            type: string
+            example: 'Bearer'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Forbidden:
+      description: El token es válido pero el rol no autoriza la operación. Devuelve ProblemDetail (RFC 8416).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
     VehicleNotFound:
       description: Vehicle not found
       content:
