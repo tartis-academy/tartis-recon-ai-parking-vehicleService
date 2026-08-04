@@ -118,7 +118,7 @@ class SecurityConfigExceptionHandlingTest {
      * verdad, de modo que el test blinda contra la regresion que motivo SEC-11
      * (restaurar la cabecera WWW-Authenticate en el 401).
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "[{index}] 401 sin token en {1}")
     @MethodSource("endpointsProtegidos")
     @DisplayName("SEC-12: sin token, todos los endpoints devuelven 401 con ProblemDetail y cabecera WWW-Authenticate")
     void shouldReturn401WithProblemDetailForAllEndpoints(RequestBuilder request, String instance) throws Exception {
