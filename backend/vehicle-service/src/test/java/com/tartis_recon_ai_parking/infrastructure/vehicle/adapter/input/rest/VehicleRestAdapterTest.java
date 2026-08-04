@@ -476,7 +476,7 @@ class VehicleRestAdapterTest {
         return Stream.of(
                 arguments(get("/v1/vehicles")),
                 arguments(get("/v1/vehicles/{id}", id)),
-                arguments(get("/v1/vehicles/plate/1234ABC")),
+                arguments(get("/v1/vehicles/plate/{plate}", "1234ABC")),
                 arguments(post("/v1/vehicles")
                         .contentType(MediaType.APPLICATION_JSON).content(vehicleBody)),
                 arguments(patch("/v1/vehicles/{id}/status", id)

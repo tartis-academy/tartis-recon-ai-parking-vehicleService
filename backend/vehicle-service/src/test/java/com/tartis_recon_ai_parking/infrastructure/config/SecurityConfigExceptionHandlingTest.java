@@ -138,7 +138,7 @@ class SecurityConfigExceptionHandlingTest {
         return Stream.of(
                 arguments(get("/v1/vehicles"), "/v1/vehicles"),
                 arguments(get("/v1/vehicles/{id}", id), "/v1/vehicles/" + id),
-                arguments(get("/v1/vehicles/plate/1234ABC"), "/v1/vehicles/plate/1234ABC"),
+                arguments(get("/v1/vehicles/plate/{plate}", "1234ABC"), "/v1/vehicles/plate/1234ABC"),
                 arguments(post("/v1/vehicles")
                                 .contentType(MediaType.APPLICATION_JSON).content(vehicleBody),
                         "/v1/vehicles"),
