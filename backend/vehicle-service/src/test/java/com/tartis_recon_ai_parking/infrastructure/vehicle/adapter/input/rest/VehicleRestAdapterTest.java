@@ -672,6 +672,7 @@ class VehicleRestAdapterTest {
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
+        verify(activateVehicleUseCase, never()).activate(any());
     }
 
     @Test
@@ -682,6 +683,7 @@ class VehicleRestAdapterTest {
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
+        verify(deleteVehicleUseCase, never()).deactivate(any());
     }
 
     @Test

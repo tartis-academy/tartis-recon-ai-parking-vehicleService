@@ -112,6 +112,18 @@ class SecurityConfigExceptionHandlingTest {
     }
 
     /**
+     * SEC-12: el health endpoint de actuator es la excepcion permitAll declarada en
+     * SecurityConfig. Si alguien la quita, las sondas de Kubernetes recibirian 401 y
+     * este test lo detecta.
+     */
+    @Test
+    @DisplayName("SEC-12: /actuator/health es publico (200 sin token)")
+    void shouldExposeActuatorHealthWithoutToken() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk());
+    }
+
+    /**
      * SEC-12: extiende el contrato de SEC-11 (que solo cubria GET /v1/vehicles) a los
      * 8 endpoints del adaptador. Aqui (no en el slice @WebMvcTest) es donde el
      * CustomizedExceptionAdapter esta en contexto y el ProblemDetail se materializa de
