@@ -15,6 +15,8 @@ import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto
 import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto.response.VehicleResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -22,6 +24,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
 import com.tartis_recon_ai_parking.infrastructure.config.SecurityConfig;
 
 import java.util.List;
@@ -440,20 +443,28 @@ class VehicleRestAdapterTest {
         verify(updateVehicleUseCase, times(1)).execute(id, createDTO);
     }
 
-    // --- SEC-04: verificacion propia del resource server, no de negocio ---
+    // --- SEC-04 / SEC-12: verificacion propia del resource server, no de negocio ---
+    //
+    // Un unico test parametrizado sobre los 8 endpoints del adaptador. El filtro de
+    // seguridad corta la peticion antes del DispatcherServlet, asi que ningun caso de
+    // uso puede invocarse. El verifyNoInteractions sobre TODOS los colaboradores es la
+    // asercion con senal (F1): si alguien rompe la cadena de seguridad, el caso de uso
+    // del endpoint se invocaria y el test fallaria, en vez de aprobar en vacio.
 
-    @Test
-    @DisplayName("Debe rechazar con 401 una peticion sin token")
-    void shouldReturn401WhenNoTokenProvided() throws Exception {
+    @ParameterizedTest(name = "[{index}] 401 sin token en {1}")
+    @MethodSource("com.tartis_recon_ai_parking.testutil.SecuredEndpoints#all")
+    @DisplayName("SEC-12: sin token, los 8 endpoints devuelven 401 y ningun caso de uso se invoca")
+    void shouldReturn401WhenNoTokenProvided(RequestBuilder request, String instance) throws Exception {
         // QUE HACE:
-        // - Llama a un endpoint valido sin adjuntar ningun JWT (sin .with(jwt())).
+        // - Recorre los 8 endpoints del adaptador sin adjuntar ningun JWT (sin .with(jwt())).
         // QUE DEBERIA HACER:
-        // El SecurityFilterChain de SEC-04 debe cortar la peticion antes de que llegue al
-        // controller: 401 Unauthorized y el caso de uso no se invoca.
-        mockMvc.perform(get("/v1/vehicles"))
+        // El SecurityFilterChain debe cortar la peticion antes de llegar al controller:
+        // 401 Unauthorized y ningun caso de uso ni mapper se invoca.
+        mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
 
-        verify(getVehicleUseCase, never()).execute();
+        verifyNoInteractions(createVehicleUseCase, deleteVehicleUseCase, activateVehicleUseCase,
+                updateVehicleUseCase, getVehicleUseCase, vehicleRestMapper);
     }
 
     // --- SEC-10: pruebas de autorizacion fina para el rol OPERARIO ---
@@ -524,6 +535,28 @@ class VehicleRestAdapterTest {
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+        verify(deleteVehicleUseCase, never()).deactivate(any());
+    }
+
+    @Test
+    @DisplayName("OPERARIO: Debe denegar la activacion explicita de un vehiculo (403)")
+    void shouldDenyActivateVehicleExplicitForOperario() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(patch("/v1/vehicles/{id}/activate", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        verify(activateVehicleUseCase, never()).activate(any());
+    }
+
+    @Test
+    @DisplayName("OPERARIO: Debe denegar la desactivacion explicita de un vehiculo (403)")
+    void shouldDenyDeactivateVehicleExplicitForOperario() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(patch("/v1/vehicles/{id}/deactivate", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
         verify(deleteVehicleUseCase, never()).deactivate(any());
     }
@@ -608,6 +641,28 @@ class VehicleRestAdapterTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("USER: Debe denegar la activacion explicita de un vehiculo (403)")
+    void shouldDenyActivateVehicleExplicitForUser() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(patch("/v1/vehicles/{id}/activate", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        verify(activateVehicleUseCase, never()).activate(any());
+    }
+
+    @Test
+    @DisplayName("USER: Debe denegar la desactivacion explicita de un vehiculo (403)")
+    void shouldDenyDeactivateVehicleExplicitForUser() throws Exception {
+        UUID id = UUID.randomUUID();
+        mockMvc.perform(patch("/v1/vehicles/{id}/deactivate", id)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        verify(deleteVehicleUseCase, never()).deactivate(any());
     }
 
     @Test
