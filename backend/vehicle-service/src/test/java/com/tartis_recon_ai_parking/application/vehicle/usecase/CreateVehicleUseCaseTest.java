@@ -15,6 +15,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,6 +30,9 @@ class CreateVehicleUseCaseTest {
     // (null, false, 0, Optional.empty()), a menos que se configure su comportamiento con when().
     @Mock
     private VehiclePersistence vehiclePersistence;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     // @InjectMocks: Crea automaticamente la instancia del caso de uso e inyecta en su constructor
     // el mock 'vehiclePersistence' declarado arriba, evitando tener que instanciarlo a mano.
