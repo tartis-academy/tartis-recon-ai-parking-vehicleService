@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -31,6 +32,9 @@ class UpdateVehicleUseCaseTest {
     // (null, false, 0, Optional.empty()), a menos que se configure su comportamiento con when().
     @Mock
     private VehiclePersistence vehiclePersistence;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     // @InjectMocks: Crea automaticamente la instancia del caso de uso e inyecta en su constructor
     // el mock 'vehiclePersistence' declarado arriba, evitando tener que instanciarlo a mano.

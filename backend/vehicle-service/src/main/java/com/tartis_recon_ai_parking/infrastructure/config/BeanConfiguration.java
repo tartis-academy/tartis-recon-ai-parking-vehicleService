@@ -8,6 +8,7 @@ import com.tartis_recon_ai_parking.application.vehicle.usecase.DeleteVehicleUseC
 import com.tartis_recon_ai_parking.application.vehicle.usecase.GetVehicleUseCase;
 import com.tartis_recon_ai_parking.application.vehicle.usecase.UpdateVehicleUseCase;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,20 +16,24 @@ import org.springframework.context.annotation.Configuration;
 public class BeanConfiguration {
 
     @Bean
-    CreateVehicleUseCase createVehicleUseCase(VehiclePersistence vehiclePersistence) {
-        return new CreateVehicleUseCase(vehiclePersistence);
+    CreateVehicleUseCase createVehicleUseCase(VehiclePersistence vehiclePersistence,
+            ApplicationEventPublisher applicationEventPublisher) {
+        return new CreateVehicleUseCase(vehiclePersistence, applicationEventPublisher);
     }
     @Bean
-    DeleteVehicleUseCase deleteVehicleUseCase(VehiclePersistence vehiclePersistence) {
-        return new DeleteVehicleUseCase(vehiclePersistence);
+    DeleteVehicleUseCase deleteVehicleUseCase(VehiclePersistence vehiclePersistence,
+            ApplicationEventPublisher applicationEventPublisher) {
+        return new DeleteVehicleUseCase(vehiclePersistence, applicationEventPublisher);
     }
     @Bean
-    ActivateVehicleUseCase activateVehicleUseCase(VehiclePersistence vehiclePersistence) {
-        return new ActivateVehicleUseCase(vehiclePersistence);
+    ActivateVehicleUseCase activateVehicleUseCase(VehiclePersistence vehiclePersistence,
+            ApplicationEventPublisher applicationEventPublisher) {
+        return new ActivateVehicleUseCase(vehiclePersistence, applicationEventPublisher);
     }
     @Bean
-    UpdateVehicleUseCase updateVehicleUseCase(VehiclePersistence vehiclePersistence) {
-        return new UpdateVehicleUseCase(vehiclePersistence);
+    UpdateVehicleUseCase updateVehicleUseCase(VehiclePersistence vehiclePersistence,
+            ApplicationEventPublisher applicationEventPublisher) {
+        return new UpdateVehicleUseCase(vehiclePersistence, applicationEventPublisher);
     }
     @Bean
     GetVehicleUseCase getVehicleUseCase(VehiclePersistence vehiclePersistence) {
