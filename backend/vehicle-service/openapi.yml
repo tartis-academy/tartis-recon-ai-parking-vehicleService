@@ -19,7 +19,9 @@ tags:
   - name: vehicles
     description: Vehicle catalogue (CRUD + logical deactivation)
 
-# Todas las operaciones requieren token JWT salvo health check público.
+# Todas las operaciones requieren token JWT (bearerAuth) salvo el health check
+# publico (/actuator/health, fuera de este contrato). SEC-13: marcado de
+# securityScheme aplicado a nivel de documento.
 # SEC-11: el entry point emite WWW-Authenticate y el cuerpo ErrorResponse
 # producido por CustomizedExceptionAdapter.
 security:
