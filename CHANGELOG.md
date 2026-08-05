@@ -46,3 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `GET /v1/vehicles/plate/{plate}`: Consulta por matrícula (usado síncronamente por `stay-service` en check-in).
 - **Persistencia PostgreSQL:** Configuración inicial JPA/Hibernate con esquema `vehicle`.
 - **Contrato OpenAPI:** Definición inicial de API en `openapi.yml`.
+
+[Unreleased]: https://github.com/tartis-academy/tartis-recon-ai-parking-vehicleService/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/tartis-academy/tartis-recon-ai-parking-vehicleService/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/tartis-academy/tartis-recon-ai-parking-vehicleService/releases/tag/v1.0.0
+
