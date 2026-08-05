@@ -177,6 +177,14 @@
             <artifactId>mapstruct</artifactId>
             <version>1.5.5.Final</version>
         </dependency>
+
+        <!-- SSE-06: vehicle-service publica VehicleChangedEvent en el exchange
+             compartido parking-events-exchange; stay-service lo consume y lo
+             reenvia por SSE. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
