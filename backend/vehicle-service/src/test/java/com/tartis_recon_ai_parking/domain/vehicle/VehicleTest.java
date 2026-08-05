@@ -249,7 +249,8 @@ class VehicleTest {
         "B-4567-IO",  // Vocales en las letras finales del formato antiguo
         "MA-1234-AB",  // Vocal 'A' en las letras finales del formato antiguo
         "XX-1234-BK",  // Codigo de provincia inexistente
-        "QQ-4567-CD"   // Codigo de provincia inexistente
+        "QQ-4567-CD",  // Codigo de provincia inexistente
+        "OU-1234-BK"   // Codigo de provincia inexistente (Ourense es OR, no OU)
     })
     @DisplayName("Debe lanzar InvalidVehicleException para matriculas con formato invalido")
     void shouldThrowExceptionForInvalidPlateFormat(String plate) {
