@@ -24,6 +24,7 @@ import org.springframework.security.core.AuthenticationException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.sql.SQLException;
+import java.time.Instant;
 
 @RestControllerAdvice
 public class CustomizedExceptionAdapter {
@@ -127,11 +128,11 @@ public class CustomizedExceptionAdapter {
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest request) {
         ErrorResponse body = new ErrorResponse(
-                java.time.Instant.now().toString(), // 1. String (Timestamp)
-                status.value(),                     // 2. int (Estado, ej: 404)
-                status.getReasonPhrase(),           // 3. String (Título, ej: "Not Found")
-                message,                            // 4. String (Detalle del error)
-                request != null ? request.getRequestURI() : "" // 5. String (Ruta)
+                Instant.now().toString(),
+                status.value(),
+                status.name(),
+                message,
+                request.getRequestURI()
         );
         return ResponseEntity.status(status).body(body);
     }

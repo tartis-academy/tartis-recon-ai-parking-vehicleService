@@ -47,7 +47,7 @@ class CustomizedExceptionAdapterTest {
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertEquals(HttpStatus.NOT_FOUND.value(), response.getBody().status());
-        assertEquals(HttpStatus.NOT_FOUND.getReasonPhrase(), response.getBody().error());
+        assertEquals("NOT_FOUND", response.getBody().error());
         assertEquals(ex.getMessage(), response.getBody().message());
         assertEquals("/v1/vehicles", response.getBody().path());
     }
@@ -61,7 +61,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleInvalid(ex, request);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals(HttpStatus.BAD_REQUEST.getReasonPhrase(), response.getBody().error());
+        assertEquals("BAD_REQUEST", response.getBody().error());
         assertEquals(ex.getMessage(), response.getBody().message());
     }
 
@@ -74,7 +74,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleExisting(ex, request);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals(HttpStatus.CONFLICT.getReasonPhrase(), response.getBody().error());
+        assertEquals("CONFLICT", response.getBody().error());
         assertEquals(ex.getMessage(), response.getBody().message());
     }
 
@@ -92,7 +92,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleValidation(ex, request);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals(HttpStatus.BAD_REQUEST.getReasonPhrase(), response.getBody().error());
+        assertEquals("BAD_REQUEST", response.getBody().error());
         assertEquals("Validation failed: field: default message", response.getBody().message());
     }
 
@@ -108,7 +108,7 @@ class CustomizedExceptionAdapterTest {
 
         ResponseEntity<ErrorResponse> response = adapter.handleValidation(ex, request);
 
-        assertEquals(HttpStatus.BAD_REQUEST.getReasonPhrase(), response.getBody().error());
+        assertEquals("BAD_REQUEST", response.getBody().error());
         assertEquals("Validation failed", response.getBody().message());
     }
 
@@ -121,7 +121,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleDataIntegrityViolationException(ex, request);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals(HttpStatus.CONFLICT.getReasonPhrase(), response.getBody().error());
+        assertEquals("CONFLICT", response.getBody().error());
         assertEquals("The operation violates database constraints or uniqueness requirements.", response.getBody().message());
         assertEquals("/v1/vehicles", response.getBody().path());
     }
@@ -135,7 +135,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleDatabaseTimeoutAndConnectionErrors(ex, request);
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase(), response.getBody().error());
+        assertEquals("SERVICE_UNAVAILABLE", response.getBody().error());
         assertEquals("The database is unreachable or the operation timed out. Please try again later.", response.getBody().message());
         assertEquals("/v1/vehicles", response.getBody().path());
     }
@@ -149,7 +149,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleCannotAcquireLockException(ex, request);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals(HttpStatus.CONFLICT.getReasonPhrase(), response.getBody().error());
+        assertEquals("CONFLICT", response.getBody().error());
         assertEquals("The resource is currently locked by another ongoing transaction. Please retry the operation.", response.getBody().message());
         assertEquals("/v1/vehicles/1", response.getBody().path());
     }
@@ -164,7 +164,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleConcurrentModification(ex, request);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals(HttpStatus.CONFLICT.getReasonPhrase(), response.getBody().error());
+        assertEquals("CONFLICT", response.getBody().error());
         assertEquals("Vehicle with plate '1234ABC' was modified by another transaction. Please refresh and try again.", response.getBody().message());
         assertEquals("/v1/vehicles", response.getBody().path());
     }
@@ -180,7 +180,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleOptimisticLocking(ex, request);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals(HttpStatus.CONFLICT.getReasonPhrase(), response.getBody().error());
+        assertEquals("CONFLICT", response.getBody().error());
         assertEquals("The resource was modified by another transaction. Please fetch the latest version and retry.", response.getBody().message());
         assertEquals("/v1/vehicles/1", response.getBody().path());
     }
@@ -194,7 +194,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleGenericDatabaseException(ex, request);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), response.getBody().error());
+        assertEquals("INTERNAL_SERVER_ERROR", response.getBody().error());
         assertEquals("An unexpected database failure occurred. The request could not be processed.", response.getBody().message());
         assertEquals("/v1/vehicles", response.getBody().path());
     }
@@ -209,7 +209,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleUnauthorized(ex, request);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        assertEquals(HttpStatus.UNAUTHORIZED.getReasonPhrase(), response.getBody().error());
+        assertEquals("UNAUTHORIZED", response.getBody().error());
         assertEquals("Authentication token is missing, invalid, or expired.", response.getBody().message());
         assertEquals("/v1/vehicles", response.getBody().path());
     }
@@ -224,7 +224,7 @@ class CustomizedExceptionAdapterTest {
         ResponseEntity<ErrorResponse> response = adapter.handleAccessDenied(ex, request);
 
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-        assertEquals(HttpStatus.FORBIDDEN.getReasonPhrase(), response.getBody().error());
+        assertEquals("FORBIDDEN", response.getBody().error());
         assertEquals("You do not have permission to perform this action.", response.getBody().message());
         assertEquals("/v1/vehicles", response.getBody().path());
     }
