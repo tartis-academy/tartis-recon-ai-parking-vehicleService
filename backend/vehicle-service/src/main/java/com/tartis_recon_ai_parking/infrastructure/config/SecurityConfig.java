@@ -46,7 +46,7 @@ public class SecurityConfig {
 
     // Compone el BearerTokenAuthenticationEntryPoint por defecto (que fija el
     // status y la cabecera WWW-Authenticate, RFC 6750) con la delegacion al
-    // resolver para que el cuerpo sea el ProblemDetail del adapter. Sin esto,
+    // resolver para que el cuerpo sea el ErrorResponse del adapter. Sin esto,
     // el entry point del oauth2ResourceServer no emite la cabecera y el
     // cliente no puede distinguir 401 (token caducado) de 403 (sin rol).
     private AuthenticationEntryPoint bearerEntryPoint(HandlerExceptionResolver resolver) {

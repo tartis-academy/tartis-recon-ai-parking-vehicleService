@@ -71,7 +71,7 @@ class CustomizedExceptionAdapterMvcTest {
     private VehicleRestMapper mapper;
 
     @Test
-    void shouldReturn404ProblemDetailWhenVehicleNotFound() throws Exception {
+    void shouldReturn404ErrorResponseWhenVehicleNotFound() throws Exception {
         UUID id = UUID.randomUUID();
         Mockito.when(getVehicleUseCase.getById(id))
                 .thenThrow(new VehicleNotFoundException("ID", id));
@@ -79,11 +79,11 @@ class CustomizedExceptionAdapterMvcTest {
         mockMvc.perform(get("/v1/vehicles/" + id).with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("Vehicle with 'ID = " + id + "' couldn't be found."));
+                .andExpect(jsonPath("$.message").value("Vehicle with 'ID = " + id + "' couldn't be found."));
     }
 
     @Test
-    void shouldReturn400ProblemDetailWhenInvalidVehicleException() throws Exception {
+    void shouldReturn400ErrorResponseWhenInvalidVehicleException() throws Exception {
         UUID id = UUID.randomUUID();
         Mockito.when(getVehicleUseCase.getById(id))
                 .thenThrow(new InvalidVehicleException("Plate", "invalid", "Invalid plate pattern"));
@@ -91,11 +91,11 @@ class CustomizedExceptionAdapterMvcTest {
         mockMvc.perform(get("/v1/vehicles/" + id).with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.detail").value("Invalid plate pattern"));
+                .andExpect(jsonPath("$.message").value("Invalid plate pattern"));
     }
 
     @Test
-    void shouldReturn409ProblemDetailWhenExistingVehicleException() throws Exception {
+    void shouldReturn409ErrorResponseWhenExistingVehicleException() throws Exception {
         VehicleRequest request = new VehicleRequest();
         request.type = "CAR";
         request.plate = "1234ABC";
@@ -114,11 +114,11 @@ class CustomizedExceptionAdapterMvcTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.detail").value("There's already a vehicle with the specified plate : 1234ABC"));
+                .andExpect(jsonPath("$.message").value("There's already a vehicle with the specified plate : 1234ABC"));
     }
 
     @Test
-    void shouldReturn400ProblemDetailWithValidationErrorsWhenRequestBodyIsInvalid() throws Exception {
+    void shouldReturn400ErrorResponseWithValidationErrorsWhenRequestBodyIsInvalid() throws Exception {
         VehicleRequest request = new VehicleRequest();
         // Missing required fields like plate, brand, etc.
 
@@ -128,12 +128,11 @@ class CustomizedExceptionAdapterMvcTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.detail").value("Validation failed"))
-                .andExpect(jsonPath("$.errors").exists());
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("Validation failed")));
     }
 
     @Test
-    void shouldReturn409ProblemDetailWhenDataIntegrityViolation() throws Exception {
+    void shouldReturn409ErrorResponseWhenDataIntegrityViolation() throws Exception {
         VehicleRequest request = new VehicleRequest();
         request.type = "CAR";
         request.plate = "1234ABC";
@@ -152,13 +151,12 @@ class CustomizedExceptionAdapterMvcTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.title").value("Data Integrity Violation"))
-                .andExpect(jsonPath("$.detail").value("The operation violates database constraints or uniqueness requirements."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+                .andExpect(jsonPath("$.message").value("The operation violates database constraints or uniqueness requirements."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles"));
     }
 
     @Test
-    void shouldReturn503ProblemDetailWhenDatabaseIsDown() throws Exception {
+    void shouldReturn503ErrorResponseWhenDatabaseIsDown() throws Exception {
         UUID id = UUID.randomUUID();
         Mockito.when(getVehicleUseCase.getById(id))
                 .thenThrow(new DataAccessResourceFailureException("DB connection refused"));
@@ -166,13 +164,12 @@ class CustomizedExceptionAdapterMvcTest {
         mockMvc.perform(get("/v1/vehicles/" + id).with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.status").value(503))
-                .andExpect(jsonPath("$.title").value("Database Service Unavailable"))
-                .andExpect(jsonPath("$.detail").value("The database is unreachable or the operation timed out. Please try again later."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles/" + id));
+                .andExpect(jsonPath("$.message").value("The database is unreachable or the operation timed out. Please try again later."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles/" + id));
     }
 
     @Test
-    void shouldReturn409ProblemDetailWhenDeadlockOccurs() throws Exception {
+    void shouldReturn409ErrorResponseWhenDeadlockOccurs() throws Exception {
         UUID id = UUID.randomUUID();
         Mockito.when(deleteVehicleUseCase.deactivate(id))
                 .thenThrow(new CannotAcquireLockException("Deadlock detected"));
@@ -185,13 +182,12 @@ class CustomizedExceptionAdapterMvcTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.title").value("Concurrency Lock Conflict"))
-                .andExpect(jsonPath("$.detail").value("The resource is currently locked by another ongoing transaction. Please retry the operation."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles/" + id + "/status"));
+                .andExpect(jsonPath("$.message").value("The resource is currently locked by another ongoing transaction. Please retry the operation."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles/" + id + "/status"));
     }
 
     @Test
-    void shouldReturn409ProblemDetailWhenVehicleConcurrentModification() throws Exception {
+    void shouldReturn409ErrorResponseWhenVehicleConcurrentModification() throws Exception {
         VehicleRequest request = new VehicleRequest();
         request.type = "CAR";
         request.plate = "1234ABC";
@@ -211,9 +207,8 @@ class CustomizedExceptionAdapterMvcTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.title").value("Concurrent Modification Conflict"))
-                .andExpect(jsonPath("$.detail").value("Vehicle with plate '1234ABC' was modified by another transaction. Please refresh and try again."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+                .andExpect(jsonPath("$.message").value("Vehicle with plate '1234ABC' was modified by another transaction. Please refresh and try again."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles"));
     }
 
     // Red de seguridad: un choque optimista que llegue sin pasar por el adaptador de
@@ -221,7 +216,7 @@ class CustomizedExceptionAdapterMvcTest {
     // ObjectOptimisticLockingFailureException es subtipo de OptimisticLockingFailureException,
     // que es lo unico que declara el handler.
     @Test
-    void shouldReturn409ProblemDetailWhenRawOptimisticLockingFailure() throws Exception {
+    void shouldReturn409ErrorResponseWhenRawOptimisticLockingFailure() throws Exception {
         UUID id = UUID.randomUUID();
         Mockito.when(deleteVehicleUseCase.deactivate(id))
                 .thenThrow(new ObjectOptimisticLockingFailureException("VehicleEntity", id));
@@ -237,8 +232,7 @@ class CustomizedExceptionAdapterMvcTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.title").value("Concurrent Modification Conflict"))
-                .andExpect(jsonPath("$.detail").value("The resource was modified by another transaction. Please fetch the latest version and retry."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles/" + id + "/status"));
+                .andExpect(jsonPath("$.message").value("The resource was modified by another transaction. Please fetch the latest version and retry."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles/" + id + "/status"));
     }
 }

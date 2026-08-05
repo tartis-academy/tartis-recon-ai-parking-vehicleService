@@ -10,7 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -26,6 +26,7 @@ import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleExcep
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleConcurrentModificationException;
+import com.tartis_recon_ai_parking.infrastructure.customizedexception.adapter.output.dto.ErrorResponse;
 
 class CustomizedExceptionAdapterTest {
 
@@ -39,28 +40,42 @@ class CustomizedExceptionAdapterTest {
     @Test
     void testHandleNotFound() {
         VehicleNotFoundException ex = new VehicleNotFoundException("Plate", "1234ABC");
-        ProblemDetail response = adapter.handleNotFound(ex);
-        
-        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatus());
-        assertEquals(ex.getMessage(), response.getDetail());
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ResponseEntity<ErrorResponse> response = adapter.handleNotFound(ex, request);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getBody().status());
+        assertEquals("NOT_FOUND", response.getBody().error());
+        assertEquals(ex.getMessage(), response.getBody().message());
+        assertEquals("/v1/vehicles", response.getBody().path());
     }
 
     @Test
     void testHandleInvalid() {
         InvalidVehicleException ex = new InvalidVehicleException("Plate", "123");
-        ProblemDetail response = adapter.handleInvalid(ex);
-        
-        assertEquals(HttpStatus.BAD_REQUEST.value(), response.getStatus());
-        assertEquals(ex.getMessage(), response.getDetail());
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ResponseEntity<ErrorResponse> response = adapter.handleInvalid(ex, request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("BAD_REQUEST", response.getBody().error());
+        assertEquals(ex.getMessage(), response.getBody().message());
     }
 
     @Test
     void testHandleExisting() {
         ExistingVehicleException ex = new ExistingVehicleException("1234ABC");
-        ProblemDetail response = adapter.handleExisting(ex);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
 
-        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
-        assertEquals(ex.getMessage(), response.getDetail());
+        ResponseEntity<ErrorResponse> response = adapter.handleExisting(ex, request);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("CONFLICT", response.getBody().error());
+        assertEquals(ex.getMessage(), response.getBody().message());
     }
 
     @Test
@@ -68,16 +83,33 @@ class CustomizedExceptionAdapterTest {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
         FieldError fieldError = new FieldError("objectName", "field", "default message");
-        
+
         when(ex.getBindingResult()).thenReturn(bindingResult);
         when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
 
-        ProblemDetail response = adapter.handleValidation(ex);
-        
-        assertEquals(HttpStatus.BAD_REQUEST.value(), response.getStatus());
-        assertEquals("Validation failed", response.getDetail());
-        assertNotNull(response.getProperties());
-        assertEquals("field: default message", response.getProperties().get("errors"));
+        ResponseEntity<ErrorResponse> response = adapter.handleValidation(ex, request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("BAD_REQUEST", response.getBody().error());
+        assertEquals("Validation failed: field: default message", response.getBody().message());
+    }
+
+    @Test
+    void testHandleValidationWithoutFieldErrors() {
+        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
+        BindingResult bindingResult = mock(BindingResult.class);
+
+        when(ex.getBindingResult()).thenReturn(bindingResult);
+        when(bindingResult.getFieldErrors()).thenReturn(List.of());
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ResponseEntity<ErrorResponse> response = adapter.handleValidation(ex, request);
+
+        assertEquals("BAD_REQUEST", response.getBody().error());
+        assertEquals("Validation failed", response.getBody().message());
     }
 
     @Test
@@ -86,12 +118,12 @@ class CustomizedExceptionAdapterTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/v1/vehicles");
 
-        ProblemDetail response = adapter.handleDataIntegrityViolationException(ex, request);
-        
-        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
-        assertEquals("Data Integrity Violation", response.getTitle());
-        assertEquals("The operation violates database constraints or uniqueness requirements.", response.getDetail());
-        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+        ResponseEntity<ErrorResponse> response = adapter.handleDataIntegrityViolationException(ex, request);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("CONFLICT", response.getBody().error());
+        assertEquals("The operation violates database constraints or uniqueness requirements.", response.getBody().message());
+        assertEquals("/v1/vehicles", response.getBody().path());
     }
 
     @Test
@@ -100,12 +132,12 @@ class CustomizedExceptionAdapterTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/v1/vehicles");
 
-        ProblemDetail response = adapter.handleDatabaseTimeoutAndConnectionErrors(ex, request);
-        
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), response.getStatus());
-        assertEquals("Database Service Unavailable", response.getTitle());
-        assertEquals("The database is unreachable or the operation timed out. Please try again later.", response.getDetail());
-        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+        ResponseEntity<ErrorResponse> response = adapter.handleDatabaseTimeoutAndConnectionErrors(ex, request);
+
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
+        assertEquals("SERVICE_UNAVAILABLE", response.getBody().error());
+        assertEquals("The database is unreachable or the operation timed out. Please try again later.", response.getBody().message());
+        assertEquals("/v1/vehicles", response.getBody().path());
     }
 
     @Test
@@ -114,12 +146,12 @@ class CustomizedExceptionAdapterTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/v1/vehicles/1");
 
-        ProblemDetail response = adapter.handleCannotAcquireLockException(ex, request);
-        
-        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
-        assertEquals("Concurrency Lock Conflict", response.getTitle());
-        assertEquals("The resource is currently locked by another ongoing transaction. Please retry the operation.", response.getDetail());
-        assertEquals(java.net.URI.create("/v1/vehicles/1"), response.getInstance());
+        ResponseEntity<ErrorResponse> response = adapter.handleCannotAcquireLockException(ex, request);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("CONFLICT", response.getBody().error());
+        assertEquals("The resource is currently locked by another ongoing transaction. Please retry the operation.", response.getBody().message());
+        assertEquals("/v1/vehicles/1", response.getBody().path());
     }
 
     @Test
@@ -129,13 +161,12 @@ class CustomizedExceptionAdapterTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/v1/vehicles");
 
-        ProblemDetail response = adapter.handleConcurrentModification(ex, request);
+        ResponseEntity<ErrorResponse> response = adapter.handleConcurrentModification(ex, request);
 
-        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
-        assertEquals("Concurrent Modification Conflict", response.getTitle());
-        assertEquals("Vehicle with plate '1234ABC' was modified by another transaction. Please refresh and try again.", response.getDetail());
-        assertEquals(java.net.URI.create("https://api.tartis.com/errors/concurrency-conflict"), response.getType());
-        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("CONFLICT", response.getBody().error());
+        assertEquals("Vehicle with plate '1234ABC' was modified by another transaction. Please refresh and try again.", response.getBody().message());
+        assertEquals("/v1/vehicles", response.getBody().path());
     }
 
     @Test
@@ -146,13 +177,12 @@ class CustomizedExceptionAdapterTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/v1/vehicles/1");
 
-        ProblemDetail response = adapter.handleOptimisticLocking(ex, request);
+        ResponseEntity<ErrorResponse> response = adapter.handleOptimisticLocking(ex, request);
 
-        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
-        assertEquals("Concurrent Modification Conflict", response.getTitle());
-        assertEquals("The resource was modified by another transaction. Please fetch the latest version and retry.", response.getDetail());
-        assertEquals(java.net.URI.create("https://api.tartis.com/errors/concurrency-conflict"), response.getType());
-        assertEquals(java.net.URI.create("/v1/vehicles/1"), response.getInstance());
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("CONFLICT", response.getBody().error());
+        assertEquals("The resource was modified by another transaction. Please fetch the latest version and retry.", response.getBody().message());
+        assertEquals("/v1/vehicles/1", response.getBody().path());
     }
 
     @Test
@@ -161,12 +191,12 @@ class CustomizedExceptionAdapterTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/v1/vehicles");
 
-        ProblemDetail response = adapter.handleGenericDatabaseException(ex, request);
-        
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), response.getStatus());
-        assertEquals("Internal Database Error", response.getTitle());
-        assertEquals("An unexpected database failure occurred. The request could not be processed.", response.getDetail());
-        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+        ResponseEntity<ErrorResponse> response = adapter.handleGenericDatabaseException(ex, request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("INTERNAL_SERVER_ERROR", response.getBody().error());
+        assertEquals("An unexpected database failure occurred. The request could not be processed.", response.getBody().message());
+        assertEquals("/v1/vehicles", response.getBody().path());
     }
 
     @Test
@@ -176,12 +206,12 @@ class CustomizedExceptionAdapterTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/v1/vehicles");
 
-        ProblemDetail response = adapter.handleUnauthorized(ex, request);
+        ResponseEntity<ErrorResponse> response = adapter.handleUnauthorized(ex, request);
 
-        assertEquals(HttpStatus.UNAUTHORIZED.value(), response.getStatus());
-        assertEquals("Unauthorized Access", response.getTitle());
-        assertEquals("Authentication token is missing, invalid, or expired.", response.getDetail());
-        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("UNAUTHORIZED", response.getBody().error());
+        assertEquals("Authentication token is missing, invalid, or expired.", response.getBody().message());
+        assertEquals("/v1/vehicles", response.getBody().path());
     }
 
     @Test
@@ -191,11 +221,22 @@ class CustomizedExceptionAdapterTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getRequestURI()).thenReturn("/v1/vehicles");
 
-        ProblemDetail response = adapter.handleAccessDenied(ex, request);
+        ResponseEntity<ErrorResponse> response = adapter.handleAccessDenied(ex, request);
 
-        assertEquals(HttpStatus.FORBIDDEN.value(), response.getStatus());
-        assertEquals("Forbidden Access", response.getTitle());
-        assertEquals("You do not have permission to perform this action.", response.getDetail());
-        assertEquals(java.net.URI.create("/v1/vehicles"), response.getInstance());
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertEquals("FORBIDDEN", response.getBody().error());
+        assertEquals("You do not have permission to perform this action.", response.getBody().message());
+        assertEquals("/v1/vehicles", response.getBody().path());
+    }
+
+    @Test
+    void errorResponseTimestampIsNonNull() {
+        VehicleNotFoundException ex = new VehicleNotFoundException("Plate", "1234ABC");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/v1/vehicles");
+
+        ResponseEntity<ErrorResponse> response = adapter.handleNotFound(ex, request);
+
+        assertNotNull(response.getBody().timestamp());
     }
 }
