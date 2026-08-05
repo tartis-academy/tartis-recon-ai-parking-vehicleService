@@ -20,7 +20,7 @@ tags:
     description: Vehicle catalogue (CRUD + logical deactivation)
 
 # Todas las operaciones requieren token JWT salvo health check público.
-# SEC-11: el entry point emite WWW-Authenticate y el cuerpo ProblemDetail
+# SEC-11: el entry point emite WWW-Authenticate y el cuerpo ErrorResponse
 # producido por CustomizedExceptionAdapter.
 security:
   - bearerAuth: []
@@ -407,32 +407,6 @@ components:
       maxLength: 7
       example: "1234ABC"
 
-    ProblemDetail:
-      type: object
-      description: >
-        Cuerpo de error real que devuelve CustomizedExceptionAdapter
-        (RFC 8416 / Problem Details for HTTP APIs,
-        application/problem+json). No confundir con ErrorResponse, que es el
-        contrato heredado para 400/404/409 y aún no se ha migrado.
-      properties:
-        type:
-          type: string
-          format: uri
-          example: "https://api.tartis.com/errors/unauthorized"
-        title:
-          type: string
-          example: "Unauthorized Access"
-        status:
-          type: integer
-          example: 401
-        detail:
-          type: string
-          example: "Authentication token is missing, invalid, or expired."
-        instance:
-          type: string
-          format: uri
-          example: "/v1/vehicles"
-
     ErrorResponse:
       type: object
       properties:
@@ -476,7 +450,7 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     Unauthorized:
-      description: Token ausente, inválido o caducado. Devuelve ProblemDetail (RFC 8416) con header WWW-Authenticate (RFC 6750).
+      description: Token ausente, inválido o caducado. Devuelve ErrorResponse con header WWW-Authenticate (RFC 6750).
       headers:
         WWW-Authenticate:
           description: >
@@ -486,15 +460,15 @@ components:
             type: string
             example: 'Bearer'
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/ProblemDetail'
+            $ref: '#/components/schemas/ErrorResponse'
     Forbidden:
-      description: El token es válido pero el rol no autoriza la operación. Devuelve ProblemDetail (RFC 8416).
+      description: El token es válido pero el rol no autoriza la operación. Devuelve ErrorResponse.
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/ProblemDetail'
+            $ref: '#/components/schemas/ErrorResponse'
     VehicleNotFound:
       description: Vehicle not found
       content:

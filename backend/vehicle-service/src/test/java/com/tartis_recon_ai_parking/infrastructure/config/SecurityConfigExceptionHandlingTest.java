@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * SEC-11: verifica que el exceptionHandling de SecurityConfig enruta correctamente
  * los errores 401 (sin token y con JWT invalido) y 403 (rol insuficiente) a traves del
- * HandlerExceptionResolver → CustomizedExceptionAdapter, produciendo un ProblemDetail
+ * HandlerExceptionResolver → CustomizedExceptionAdapter, produciendo un ErrorResponse
  * con la estructura de error definida en lugar de la respuesta por defecto de Spring.
  */
 @SpringBootTest(properties = {
@@ -60,19 +60,19 @@ class SecurityConfigExceptionHandlingTest {
     }
 
     @Test
-    @DisplayName("SEC-11: Sin token, el authenticationEntryPoint enruta a CustomizedExceptionAdapter → 401 con ProblemDetail y cabecera WWW-Authenticate")
+    @DisplayName("SEC-11: Sin token, el authenticationEntryPoint enruta a CustomizedExceptionAdapter → 401 con ErrorResponse y cabecera WWW-Authenticate")
     void shouldReturn401WhenNoToken() throws Exception {
         mockMvc.perform(get("/v1/vehicles"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, containsString("Bearer")))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.title").value("Unauthorized Access"))
-                .andExpect(jsonPath("$.detail").value("Authentication token is missing, invalid, or expired."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Authentication token is missing, invalid, or expired."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles"));
     }
 
     @Test
-    @DisplayName("SEC-11: Con JWT sintacticamente invalido, el resource server enruta a CustomizedExceptionAdapter → 401 con ProblemDetail y cabecera WWW-Authenticate")
+    @DisplayName("SEC-11: Con JWT sintacticamente invalido, el resource server enruta a CustomizedExceptionAdapter → 401 con ErrorResponse y cabecera WWW-Authenticate")
     void shouldReturn401WhenMalformedJwt() throws Exception {
         when(jwtDecoder.decode(anyString())).thenThrow(new BadJwtException("Invalid or expired JWT"));
 
@@ -81,20 +81,20 @@ class SecurityConfigExceptionHandlingTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, containsString("Bearer")))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.title").value("Unauthorized Access"))
-                .andExpect(jsonPath("$.detail").value("Authentication token is missing, invalid, or expired."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Authentication token is missing, invalid, or expired."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles"));
     }
 
     @Test
-    @DisplayName("SEC-11: Con rol insuficiente, @PreAuthorize enruta a CustomizedExceptionAdapter → 403 con ProblemDetail")
+    @DisplayName("SEC-11: Con rol insuficiente, @PreAuthorize enruta a CustomizedExceptionAdapter → 403 con ErrorResponse")
     void shouldReturn403WhenInsufficientRole() throws Exception {
         mockMvc.perform(get("/v1/vehicles")
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER"))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.title").value("Forbidden Access"))
-                .andExpect(jsonPath("$.detail").value("You do not have permission to perform this action."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.message").value("You do not have permission to perform this action."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles"));
     }
 }

@@ -164,7 +164,7 @@ class VehicleRestAdapterTest {
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("Vehicle with 'ID = " + id + "' couldn't be found."));
+                .andExpect(jsonPath("$.message").value("Vehicle with 'ID = " + id + "' couldn't be found."));
 
         verify(getVehicleUseCase, times(1)).getById(id);
     }
@@ -209,7 +209,7 @@ class VehicleRestAdapterTest {
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("Vehicle with 'plate = 9999XYZ' couldn't be found."));
+                .andExpect(jsonPath("$.message").value("Vehicle with 'plate = 9999XYZ' couldn't be found."));
 
         verify(getVehicleUseCase, times(1)).getByPlate("9999XYZ");
     }
@@ -285,7 +285,7 @@ class VehicleRestAdapterTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("Invalid vehicle data: VehicleType can't be HELICOPTER"));
+                .andExpect(jsonPath("$.message").value("Invalid vehicle data: VehicleType can't be HELICOPTER"));
 
         verify(createVehicleUseCase, times(1)).execute(createDTO);
     }
