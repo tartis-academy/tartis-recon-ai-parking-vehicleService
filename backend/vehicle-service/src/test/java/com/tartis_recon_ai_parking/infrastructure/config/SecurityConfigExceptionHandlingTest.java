@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * SEC-11: verifica que el exceptionHandling de SecurityConfig enruta correctamente
  * los errores 401 (sin token y con JWT invalido) y 403 (rol insuficiente) a traves del
- * HandlerExceptionResolver → CustomizedExceptionAdapter, produciendo un ProblemDetail
+ * HandlerExceptionResolver → CustomizedExceptionAdapter, produciendo un ErrorResponse
  * con la estructura de error definida en lugar de la respuesta por defecto de Spring.
  */
 @SpringBootTest(properties = {
@@ -65,19 +65,19 @@ class SecurityConfigExceptionHandlingTest {
     }
 
     @Test
-    @DisplayName("SEC-11: Sin token, el authenticationEntryPoint enruta a CustomizedExceptionAdapter → 401 con ProblemDetail y cabecera WWW-Authenticate")
+    @DisplayName("SEC-11: Sin token, el authenticationEntryPoint enruta a CustomizedExceptionAdapter → 401 con ErrorResponse y cabecera WWW-Authenticate")
     void shouldReturn401WhenNoToken() throws Exception {
         mockMvc.perform(get("/v1/vehicles"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, containsString("Bearer")))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.title").value("Unauthorized Access"))
-                .andExpect(jsonPath("$.detail").value("Authentication token is missing, invalid, or expired."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+                .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Authentication token is missing, invalid, or expired."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles"));
     }
 
     @Test
-    @DisplayName("SEC-11: Con JWT sintacticamente invalido, el resource server enruta a CustomizedExceptionAdapter → 401 con ProblemDetail y cabecera WWW-Authenticate")
+    @DisplayName("SEC-11: Con JWT sintacticamente invalido, el resource server enruta a CustomizedExceptionAdapter → 401 con ErrorResponse y cabecera WWW-Authenticate")
     void shouldReturn401WhenMalformedJwt() throws Exception {
         when(jwtDecoder.decode(anyString())).thenThrow(new BadJwtException("Invalid or expired JWT"));
 
@@ -86,21 +86,21 @@ class SecurityConfigExceptionHandlingTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, containsString("Bearer")))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.title").value("Unauthorized Access"))
-                .andExpect(jsonPath("$.detail").value("Authentication token is missing, invalid, or expired."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+                .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Authentication token is missing, invalid, or expired."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles"));
     }
 
     @Test
-    @DisplayName("SEC-11: Con rol insuficiente, @PreAuthorize enruta a CustomizedExceptionAdapter → 403 con ProblemDetail")
+    @DisplayName("SEC-11: Con rol insuficiente, @PreAuthorize enruta a CustomizedExceptionAdapter → 403 con ErrorResponse")
     void shouldReturn403WhenInsufficientRole() throws Exception {
         mockMvc.perform(get("/v1/vehicles")
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER"))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.title").value("Forbidden Access"))
-                .andExpect(jsonPath("$.detail").value("You do not have permission to perform this action."))
-                .andExpect(jsonPath("$.instance").value("/v1/vehicles"));
+                .andExpect(jsonPath("$.error").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("You do not have permission to perform this action."))
+                .andExpect(jsonPath("$.path").value("/v1/vehicles"));
     }
 
     /**
@@ -118,21 +118,21 @@ class SecurityConfigExceptionHandlingTest {
     /**
      * SEC-12: extiende el contrato de SEC-11 (que solo cubria GET /v1/vehicles) a los
      * 8 endpoints del adaptador. Aqui (no en el slice @WebMvcTest) es donde el
-     * CustomizedExceptionAdapter esta en contexto y el ProblemDetail se materializa de
+     * CustomizedExceptionAdapter esta en contexto y el ErrorResponse se materializa de
      * verdad, de modo que el test blinda contra la regresion que motivo SEC-11
      * (restaurar la cabecera WWW-Authenticate en el 401).
      */
     @ParameterizedTest(name = "[{index}] 401 sin token en {1}")
     @MethodSource("com.tartis_recon_ai_parking.testutil.SecuredEndpoints#all")
-    @DisplayName("SEC-12: sin token, todos los endpoints devuelven 401 con ProblemDetail y cabecera WWW-Authenticate")
-    void shouldReturn401WithProblemDetailForAllEndpoints(RequestBuilder request, String instance) throws Exception {
+    @DisplayName("SEC-12: sin token, todos los endpoints devuelven 401 con ErrorResponse y cabecera WWW-Authenticate")
+    void shouldReturn401WithErrorResponseForAllEndpoints(RequestBuilder request, String path) throws Exception {
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, containsString("Bearer")))
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.title").value("Unauthorized Access"))
-                .andExpect(jsonPath("$.detail").value("Authentication token is missing, invalid, or expired."))
-                .andExpect(jsonPath("$.instance").value(instance));
+                .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Authentication token is missing, invalid, or expired."))
+                .andExpect(jsonPath("$.path").value(path));
     }
 }
