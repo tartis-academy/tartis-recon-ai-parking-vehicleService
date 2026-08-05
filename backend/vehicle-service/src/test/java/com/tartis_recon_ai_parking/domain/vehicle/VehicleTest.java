@@ -220,7 +220,7 @@ class VehicleTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "M-1234-AB", "B-4567-CD", "MA-1234-AB", "GR-123456-XY", "BI-9999-ZZ" })
+    @ValueSource(strings = { "M-1234-BK", "B-4567-CD", "MA-1234-BK", "GR-123456-XY", "BI-9999-ZZ" })
     @DisplayName("No debe lanzar excepcion para matriculas antiguas validas (provincia-digitos-letras)")
     void shouldNotThrowExceptionForValidOldPlates(String plate) {
         // QUE HACE:
@@ -241,10 +241,15 @@ class VehicleTest {
         "ABCD1234",  // Letras antes de digitos
         "1234",      // Solo digitos
         "BCD",       // Solo letras
-        "M1234AB",   // Formato antiguo sin guiones
-        "MAD-1234-AB", // 3 letras de provincia (maximo son 2)
-        "M-123-AB",  // Solo 3 digitos en formato antiguo
-        "M-1234567-AB" // 7 digitos en formato antiguo
+        "M1234BK",   // Formato antiguo sin guiones
+        "MAD-1234-BK", // 3 letras de provincia (maximo son 2)
+        "M-123-BK",  // Solo 3 digitos en formato antiguo
+        "M-1234567-BK", // 7 digitos en formato antiguo
+        "M-1234-AE",  // Vocales en las letras finales del formato antiguo
+        "B-4567-IO",  // Vocales en las letras finales del formato antiguo
+        "MA-1234-AB",  // Vocal 'A' en las letras finales del formato antiguo
+        "XX-1234-BK",  // Codigo de provincia inexistente
+        "QQ-4567-CD"   // Codigo de provincia inexistente
     })
     @DisplayName("Debe lanzar InvalidVehicleException para matriculas con formato invalido")
     void shouldThrowExceptionForInvalidPlateFormat(String plate) {
