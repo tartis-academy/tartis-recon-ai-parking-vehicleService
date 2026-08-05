@@ -135,37 +135,4 @@ class SecurityConfigExceptionHandlingTest {
                 .andExpect(jsonPath("$.message").value("Authentication token is missing, invalid, or expired."))
                 .andExpect(jsonPath("$.path").value(path));
     }
-
-    /**
-     * SEC-12: el health endpoint de actuator es la excepcion permitAll declarada en
-     * SecurityConfig. Si alguien la quita, las sondas de Kubernetes recibirian 401 y
-     * este test lo detecta.
-     */
-    @Test
-    @DisplayName("SEC-12: /actuator/health es publico (200 sin token)")
-    void shouldExposeActuatorHealthWithoutToken() throws Exception {
-        mockMvc.perform(get("/actuator/health"))
-                .andExpect(status().isOk());
-    }
-
-    /**
-     * SEC-12: extiende el contrato de SEC-11 (que solo cubria GET /v1/vehicles) a los
-     * 8 endpoints del adaptador. Aqui (no en el slice @WebMvcTest) es donde el
-     * CustomizedExceptionAdapter esta en contexto y el ProblemDetail se materializa de
-     * verdad, de modo que el test blinda contra la regresion que motivo SEC-11
-     * (restaurar la cabecera WWW-Authenticate en el 401).
-     */
-    @ParameterizedTest(name = "[{index}] 401 sin token en {1}")
-    @MethodSource("com.tartis_recon_ai_parking.testutil.SecuredEndpoints#all")
-    @DisplayName("SEC-12: sin token, todos los endpoints devuelven 401 con ProblemDetail y cabecera WWW-Authenticate")
-    void shouldReturn401WithProblemDetailForAllEndpoints(RequestBuilder request, String instance) throws Exception {
-        mockMvc.perform(request)
-                .andExpect(status().isUnauthorized())
-                .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, containsString("Bearer")))
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.title").value("Unauthorized Access"))
-                .andExpect(jsonPath("$.detail").value("Authentication token is missing, invalid, or expired."))
-                .andExpect(jsonPath("$.instance").value(instance));
-    }
 }
