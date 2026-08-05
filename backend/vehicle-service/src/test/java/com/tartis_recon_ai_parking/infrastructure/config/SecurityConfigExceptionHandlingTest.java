@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,19 +19,12 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.UUID;
-import java.util.stream.Stream;
-
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -131,7 +123,7 @@ class SecurityConfigExceptionHandlingTest {
      * (restaurar la cabecera WWW-Authenticate en el 401).
      */
     @ParameterizedTest(name = "[{index}] 401 sin token en {1}")
-    @MethodSource("endpointsProtegidos")
+    @MethodSource("com.tartis_recon_ai_parking.testutil.SecuredEndpoints#all")
     @DisplayName("SEC-12: sin token, todos los endpoints devuelven 401 con ProblemDetail y cabecera WWW-Authenticate")
     void shouldReturn401WithProblemDetailForAllEndpoints(RequestBuilder request, String instance) throws Exception {
         mockMvc.perform(request)
@@ -142,28 +134,5 @@ class SecurityConfigExceptionHandlingTest {
                 .andExpect(jsonPath("$.title").value("Unauthorized Access"))
                 .andExpect(jsonPath("$.detail").value("Authentication token is missing, invalid, or expired."))
                 .andExpect(jsonPath("$.instance").value(instance));
-    }
-
-    static Stream<Arguments> endpointsProtegidos() {
-        UUID id = UUID.randomUUID();
-        String vehicleBody = "{\"type\":\"CAR\",\"plate\":\"1234ABC\"}";
-        return Stream.of(
-                arguments(get("/v1/vehicles"), "/v1/vehicles"),
-                arguments(get("/v1/vehicles/{id}", id), "/v1/vehicles/" + id),
-                arguments(get("/v1/vehicles/plate/{plate}", "1234ABC"), "/v1/vehicles/plate/1234ABC"),
-                arguments(post("/v1/vehicles")
-                                .contentType(MediaType.APPLICATION_JSON).content(vehicleBody),
-                        "/v1/vehicles"),
-                arguments(patch("/v1/vehicles/{id}/status", id)
-                                .contentType(MediaType.APPLICATION_JSON).content("{\"active\":false}"),
-                        "/v1/vehicles/" + id + "/status"),
-                arguments(patch("/v1/vehicles/{id}/deactivate", id),
-                        "/v1/vehicles/" + id + "/deactivate"),
-                arguments(patch("/v1/vehicles/{id}/activate", id),
-                        "/v1/vehicles/" + id + "/activate"),
-                arguments(put("/v1/vehicles/{id}", id)
-                                .contentType(MediaType.APPLICATION_JSON).content(vehicleBody),
-                        "/v1/vehicles/" + id)
-        );
     }
 }

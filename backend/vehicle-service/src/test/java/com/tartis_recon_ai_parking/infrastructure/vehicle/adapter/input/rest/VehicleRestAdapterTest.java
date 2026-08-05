@@ -16,7 +16,6 @@ import com.tartis_recon_ai_parking.infrastructure.vehicle.adapter.input.rest.dto
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -30,9 +29,7 @@ import com.tartis_recon_ai_parking.infrastructure.config.SecurityConfig;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Stream;
 
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -454,10 +451,10 @@ class VehicleRestAdapterTest {
     // asercion con senal (F1): si alguien rompe la cadena de seguridad, el caso de uso
     // del endpoint se invocaria y el test fallaria, en vez de aprobar en vacio.
 
-    @ParameterizedTest
-    @MethodSource("endpointsProtegidosSinToken")
+    @ParameterizedTest(name = "[{index}] 401 sin token en {1}")
+    @MethodSource("com.tartis_recon_ai_parking.testutil.SecuredEndpoints#all")
     @DisplayName("SEC-12: sin token, los 8 endpoints devuelven 401 y ningun caso de uso se invoca")
-    void shouldReturn401WhenNoTokenProvided(RequestBuilder request) throws Exception {
+    void shouldReturn401WhenNoTokenProvided(RequestBuilder request, String instance) throws Exception {
         // QUE HACE:
         // - Recorre los 8 endpoints del adaptador sin adjuntar ningun JWT (sin .with(jwt())).
         // QUE DEBERIA HACER:
@@ -468,24 +465,6 @@ class VehicleRestAdapterTest {
 
         verifyNoInteractions(createVehicleUseCase, deleteVehicleUseCase, activateVehicleUseCase,
                 updateVehicleUseCase, getVehicleUseCase, vehicleRestMapper);
-    }
-
-    static Stream<Arguments> endpointsProtegidosSinToken() {
-        UUID id = UUID.randomUUID();
-        String vehicleBody = "{\"type\":\"CAR\",\"plate\":\"1234ABC\"}";
-        return Stream.of(
-                arguments(get("/v1/vehicles")),
-                arguments(get("/v1/vehicles/{id}", id)),
-                arguments(get("/v1/vehicles/plate/{plate}", "1234ABC")),
-                arguments(post("/v1/vehicles")
-                        .contentType(MediaType.APPLICATION_JSON).content(vehicleBody)),
-                arguments(patch("/v1/vehicles/{id}/status", id)
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"active\":false}")),
-                arguments(patch("/v1/vehicles/{id}/deactivate", id)),
-                arguments(patch("/v1/vehicles/{id}/activate", id)),
-                arguments(put("/v1/vehicles/{id}", id)
-                        .contentType(MediaType.APPLICATION_JSON).content(vehicleBody))
-        );
     }
 
     // --- SEC-10: pruebas de autorizacion fina para el rol OPERARIO ---
