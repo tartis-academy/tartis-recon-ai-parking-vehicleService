@@ -8,6 +8,7 @@
 - **Consulta y Búsqueda:** Consulta paginada de vehículos, búsqueda por UUID y búsqueda por matrícula (utilizada síncronamente por `stay-service` durante el flujo de check-in).
 - **Modificación:** Edición de atributos modificables del vehículo (la matrícula se mantiene inmutable).
 - **Baja y Alta Lógica (RN-11):** Gestión del estado de activación (`active=true/false`). Según **RN-11**, los vehículos no se eliminan físicamente de la base de datos para preservar el historial de estancias. Un vehículo dado de baja lógica (`active=false`) tiene bloqueado el acceso al parking al intentar el check-in.
+- **Emisión de Eventos de Dominio:** Publicación asíncrona del evento `VehicleChangedEvent` tras operaciones de creación, edición o cambio de estado.
 
 ---
 
@@ -30,7 +31,7 @@ Todos los endpoints requieren autenticación perimetral y validación mediante B
 
 ## 3. Casos de Uso (Arquitectura Hexagonal)
 
-Los casos de uso de la capa de aplicación orchestran las reglas de dominio utilizando los puertos de salida:
+Los casos de uso de la capa de aplicación orquestan las reglas de dominio utilizando los puertos de salida:
 
 - **`CreateVehicleUseCase`:** Valida la unicidad de la matrícula y persiste la entidad `Vehicle` (nace en estado `active=true`).
 - **`GetVehicleByPlateUseCase`:** Recupera la entidad por matrícula para la verificación de check-in.
