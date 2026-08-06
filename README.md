@@ -41,14 +41,14 @@ Los casos de uso de la capa de aplicación orchestran las reglas de dominio util
 
 ### Puertos de Dominio:
 - **Puerto de Entrada:** `CreateVehiclePort`, `GetVehiclePort`, `ListVehiclesPort`, `UpdateVehiclePort`, `UpdateVehicleStatusPort`.
-- **Puerto de Salida:** `VehiclePersistence` (Implementado por `VehiclePersistenceAdapter` usando `Spring Data JPA`).
+- **Puertos de Salida:** `VehiclePersistence` (`VehiclePersistenceAdapter`), `VehicleEventPublisher` (`VehicleEventPublisherAdapter` / `VehicleChangedEventRelay`).
 
 ---
 
 ## 4. Eventos publicados y consumidos
 
-Este microservicio opera bajo un modelo de comunicación REST síncrono:
-- **Eventos publicados en RabbitMQ:** Ninguno.
+- **Eventos publicados en RabbitMQ:**
+  - **`VehicleChangedEvent`:** Publicado en la Exchange `parking-events-exchange` con routing key `vehicle-changed-v1` tras la creación, edición, baja lógica (RN-11) o reactivación de un vehículo (`VehicleEventPublisherAdapter`). Se procesa de forma segura tras la confirmación de transacción mediante `@TransactionalEventListener(phase = AFTER_COMMIT)`.
 - **Eventos consumidos de RabbitMQ:** Ninguno.
 
 ---
