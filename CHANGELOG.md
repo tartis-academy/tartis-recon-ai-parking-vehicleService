@@ -5,6 +5,14 @@ All notable changes to the `vehicle-service` microservice will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Publicación de eventos de dominio (SSE-06):** `vehicle-service` publica `VehicleChangedEvent` (v1) en el exchange compartido `parking-events-exchange` con routing key `vehicle-changed-v1` al crear, actualizar, activar o desactivar un vehículo. La emisión ocurre en `AFTER_COMMIT` (`VehicleChangedEventRelay`), de modo que un rollback nunca deja un evento publicado, y las operaciones idempotentes (activar un vehículo ya activo) no generan evento.
+
+### Changed
+- **Healthcheck independiente del broker:** `management.health.rabbit.enabled=false`. La publicación es best-effort, así que una caída de RabbitMQ no debe marcar el servicio como no sano ni sacarlo del enrutado de Kong.
+
 ## [2.0.0] - 2026-08-04
 
 ### Added

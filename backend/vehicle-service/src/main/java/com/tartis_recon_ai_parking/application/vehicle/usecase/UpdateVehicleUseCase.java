@@ -2,6 +2,7 @@ package com.tartis_recon_ai_parking.application.vehicle.usecase;
 
 import java.util.UUID;
 
+import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleChangedEvent;
 import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleCreateDTO;
 import com.tartis_recon_ai_parking.application.vehicle.dto.VehicleDTO;
 import com.tartis_recon_ai_parking.application.vehicle.factory.VehicleDTOFactory;
@@ -10,15 +11,21 @@ import com.tartis_recon_ai_parking.domain.vehicle.Vehicle;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.ExistingVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.InvalidVehicleException;
 import com.tartis_recon_ai_parking.domain.vehicle.exception.VehicleNotFoundException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 
 @Transactional
 public class UpdateVehicleUseCase {
 
     private final VehiclePersistence vehiclePersistence;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    public UpdateVehicleUseCase(VehiclePersistence vehiclePersistence) {
+    public UpdateVehicleUseCase(VehiclePersistence vehiclePersistence,
+                                ApplicationEventPublisher applicationEventPublisher) {
         this.vehiclePersistence = vehiclePersistence;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     /**
@@ -49,6 +56,8 @@ public class UpdateVehicleUseCase {
             newData.getColor(), newData.getNumDoors(), newData.getHasSidecar(), existingVehicle.isActive());
 
         // 5. Guardamos los cambios.
-        return VehicleDTOFactory.toDTO(vehiclePersistence.save(updatedVehicle));
+        Vehicle saved = vehiclePersistence.save(updatedVehicle);
+        applicationEventPublisher.publishEvent(VehicleChangedEvent.of(saved, Instant.now()));
+        return VehicleDTOFactory.toDTO(saved);
     }
 }
