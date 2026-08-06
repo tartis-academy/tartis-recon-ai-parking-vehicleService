@@ -75,37 +75,86 @@ Los casos de uso de la capa de aplicación orchestran las reglas de dominio util
 
 ## 6. Ejecución de forma aislada
 
-Para ejecutar y probar `vehicle-service` de forma independiente sin depender de otros microservicios:
+Para ejecutar y probar `vehicle-service` de forma independiente sin depender del resto de microservicios:
 
-### Opción 1: Entorno de Desarrollo (Perfil `dev`)
-Conectándose al Postgres compartido (esquema `vehicle`):
-```bash
-cd backend/vehicle-service
-mvn spring-boot:run
-```
+1. **Opción 1: Entorno de Desarrollo (Perfil `dev`)**
+   Navegar a la carpeta del microservicio y arrancar con Maven:
+   ```bash
+   cd backend/vehicle-service
+   mvn spring-boot:run
+   ```
+   *El servicio se conectará al esquema `vehicle` del Postgres compartido.*
 
-### Opción 2: Base de Datos Dedicada (Perfil `prod` / Contenedor Aislado)
-1. Levantar el contenedor PostgreSQL dedicado en el puerto `5433`:
+2. **Opción 2: Base de Datos Dedicada (Perfil `prod` / Contenedores Aislados)**
+   Para ejecutar contra una base de datos PostgreSQL exclusiva en puerto `5433`:
    ```bash
    cd backend/vehicle-service
    cp .env.example .env
    docker compose up -d
-   ```
-2. Ejecutar la aplicación Spring Boot activando el perfil `prod` para aplicar migraciones Flyway (`V1__init.sql`, `V2__add_version.sql`):
-   ```bash
    mvn spring-boot:run -Dspring-boot.run.profiles=prod
    ```
 
 ---
 
-## 7. Migraciones de Base de Datos (Flyway)
+## 7. Levantar el entorno local
 
-Las migraciones de base de datos se aplican automáticamente en perfil `prod`:
-- `V1__init.sql`: Creación del esquema base `vehicle.vehicles` y tabla de vehículos.
-- `V2__add_version.sql`: Adición de la columna `version` para el control de concurrencia optimista (`@Version`).
+Las herramientas compartidas (Postgres de dev con los 5 schemas, pgAdmin, SonarQube) viven en el repositorio de infraestructura [`tartis-recon-ia-parking-infra`](https://github.com/tartis-academy/tartis-recon-ia-parking-infra). Levántalas desde allí primero:
+
+```bash
+cd ../tartis-recon-ia-parking-infra
+./setup.sh
+```
+
+Esto es lo único necesario para el desarrollo diario en perfil `dev`: `vehicle-service` se conecta al Postgres compartido utilizando el esquema `vehicle`.
+
+El PostgreSQL DEDICADO de `vehicle-service` (database-per-service real, perfil `prod` o para levantar este servicio aislado) vive en `backend/vehicle-service`:
+
+```bash
+cd backend/vehicle-service
+cp .env.example .env
+docker compose up -d
+```
+
+Comprueba que el contenedor esté `healthy`:
+```bash
+docker compose ps
+```
+
+Para detener el contenedor (con `-v` borra además los datos de la BD):
+```bash
+docker compose down
+```
 
 ---
 
-## 8. Escaneo de Seguridad (Trivy)
+## 8. Datos de conexión
 
-El pipeline de CI ejecuta la herramienta Trivy para el análisis de vulnerabilidades en la imagen Docker del microservicio.
+| Dato | Valor |
+|---|---|
+| BD dedicada desde tu máquina | `localhost:5433` · `vehicle_db` · `vehicle_user` |
+| BD dedicada desde pgAdmin | `parking-vehicle-postgres:5432` (nombre del contenedor, puerto interno) |
+
+pgAdmin y SonarQube se levantan desde `tartis-recon-ia-parking-infra`.
+
+---
+
+## 9. Migraciones de base de datos (Flyway)
+
+El esquema ya no se crea a mano ni con un `schema.sql` montado como init script: `V1__init.sql` (en `src/main/resources/db/migration`) es la baseline, y Flyway la aplica solo al arrancar la app contra la BD dedicada (perfil `prod`). En dev, Flyway está desactivado (`spring.flyway.enabled=false` en `application-dev.properties`): el Postgres compartido con 5 schemas sigue gestionado por `ddl-auto=update`, fuera del alcance de esta migración.
+
+Para añadir un cambio de esquema: crea `V2__descripcion.sql` (nunca edites `V1__init.sql` una vez desplegado) en la misma carpeta, con el DDL nuevo. Flyway lo detecta y lo aplica en el siguiente arranque.
+
+---
+
+## 10. Escaneo de imagen (Trivy)
+
+El job `docker-scan` de la CI construye la imagen final del Dockerfile y la escanea con [Trivy](https://trivy.dev/). El informe completo (`CRITICAL` + `HIGH`) se publica siempre en la pestaña **Security** del repo; solo una vulnerabilidad `CRITICAL` hace fallar el job.
+
+Si una `CRITICAL` no tiene fix disponible todavía y hay que aceptar el riesgo de forma consciente, se ignora explícitamente añadiendo su CVE a un `.trivyignore` en la raíz del repo (no existe ninguno hoy).
+
+---
+
+## 11. Problemas frecuentes
+
+- `network parking-shared ... not found` $\rightarrow$ te falta crear la red desde el repo de infra (`docker network create parking-shared`, o `./setup.sh` allí).
+- Cambias el `.env` y no se entera $\rightarrow$ `docker compose up -d --force-recreate` (si tocas usuario o contraseña de Postgres, además `docker compose down -v`).
