@@ -5,15 +5,7 @@ All notable changes to the `vehicle-service` microservice will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-- **Publicación de eventos de dominio (SSE-06):** `vehicle-service` publica `VehicleChangedEvent` (v1) en el exchange compartido `parking-events-exchange` con routing key `vehicle-changed-v1` al crear, actualizar, activar o desactivar un vehículo. La emisión ocurre en `AFTER_COMMIT` (`VehicleChangedEventRelay`), de modo que un rollback nunca deja un evento publicado, y las operaciones idempotentes (activar un vehículo ya activo) no generan evento.
-
-### Changed
-- **Healthcheck independiente del broker:** `management.health.rabbit.enabled=false`. La publicación es best-effort, así que una caída de RabbitMQ no debe marcar el servicio como no sano ni sacarlo del enrutado de Kong.
-
-## [2.0.0] - 2026-08-04
+## [1.0.0] - 2026-08-06
 
 ### Added
 - **Integración con Keycloak & Spring Security:** Configuración de OAuth2 Resource Server para validar Bearer Access Tokens emitidos por Keycloak y mapeo de autoridades con `KeycloakRoleConverter`.
@@ -39,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Protección con `@PreAuthorize`:** Control de autorización a nivel de método en los adaptadores REST.
 - **Escaneo Continuo de Vulnerabilidades:** Integración con Trivy (`docker-scan`) en el pipeline de CI/CD para la detección de vulnerabilidades en imágenes Docker.
 
-## [1.0.0] - 2026-07-25
+## [0.5.0] - 2026-07-29
 
 ### Added
 - **MVP Inicial de `vehicle-service`:** Implementación inicial de la arquitectura hexagonal para el catálogo de vehículos.
@@ -53,6 +45,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Persistencia PostgreSQL:** Configuración inicial JPA/Hibernate con esquema `vehicle`.
 - **Contrato OpenAPI:** Definición inicial de API en `openapi.yml`.
 
-[2.0.0]: https://github.com/tartis-academy/tartis-recon-ai-parking-vehicleService/compare/v1.0.0...v2.0.0
-[1.0.0]: https://github.com/tartis-academy/tartis-recon-ai-parking-vehicleService/releases/tag/v1.0.0
-
+[1.0.0]: https://github.com/tartis-academy/tartis-recon-ai-parking-vehicleService/compare/v0.5.0...v1.0.0
+[0.5.0]: https://github.com/tartis-academy/tartis-recon-ai-parking-vehicleService/releases/tag/v0.5.0
