@@ -21,7 +21,7 @@ Entidad principal **`Vehicle`** con los siguientes atributos:
 |---|---|---|---|
 | `id` | `UUID` | Identificador único universal del vehículo | Autogenerado (PK) |
 | `plate` | `String` | Número de matrícula del vehículo | Único, no nulo, validado por `validPlate` |
-| `vehicleType` | `VehicleType` | Tipo de vehículo (`CAR`, `MOTORBIKE`, `VAN`) | No nulo |
+| `vehicleType` | `VehicleType` | Tipo de vehículo (`CAR`, `MOTORBIKE`, `CAR_PMR`) | No nulo |
 | `brand` | `String` | Marca del vehículo | Requerido |
 | `model` | `String` | Modelo del vehículo | Requerido |
 | `color` | `String` | Color del vehículo | Opcional |
@@ -61,8 +61,7 @@ En la Fase I, todos los endpoints se exponen directamente vía HTTP sin capas pe
 Para mantener la trazabilidad del alcance, las siguientes capacidades **NO forman parte de la Fase I (v0.5.0)** y fueron introducidas en la Fase II:
 
 1. **Baja y Alta Lógica (RN-11):** No existen los endpoints `PATCH /v1/vehicles/{id}/status` ni `PATCH /v1/vehicles/{id}/activate`.
-2. **Categoría PMR:** No existe el tipo de vehículo `CAR_PMR`.
-3. **Seguridad OAuth2 / Keycloak:** No hay validación de Bearer Access Tokens JWT ni control de acceso por roles RBAC (`ADMIN`, `OPERARIO`).
-4. **API Gateway (Kong):** No hay enrutamiento centralizado en el perímetro.
-5. **Control de Concurrencia Optimista:** No existe la columna `version` en la tabla `vehicles` (migración Flyway `V2`).
-6. **Trazabilidad MDC:** No existen los filtros de logging distribuido (`CorrelationIdFilter`, `RequestIdentityFilter`).
+2. **Seguridad OAuth2 / Keycloak:** No hay validación de Bearer Access Tokens JWT ni control de acceso por roles RBAC (`ADMIN`, `OPERARIO`).
+3. **API Gateway (Kong):** No hay enrutamiento centralizado en el perímetro.
+4. **Control de Concurrencia Optimista:** No existe la columna `version` en la tabla `vehicles` (migración Flyway `V2`).
+5. **Trazabilidad MDC:** No existen los filtros de logging distribuido (`CorrelationIdFilter`, `RequestIdentityFilter`).
