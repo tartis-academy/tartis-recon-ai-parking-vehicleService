@@ -470,13 +470,19 @@ class VehicleRestAdapterTest {
     // --- SEC-10: pruebas de autorizacion fina para el rol OPERARIO ---
 
     @Test
-    @DisplayName("OPERARIO: Debe denegar la consulta de todos los vehiculos (403)")
-    void shouldDenyGetAllVehiclesForOperario() throws Exception {
+    @DisplayName("OPERARIO: Debe permitir la consulta de todos los vehiculos (200)")
+    void shouldAllowGetAllVehiclesForOperario() throws Exception {
+        // El panel de administracion muestra a OPERARIO el listado en modo
+        // consulta. La escritura sigue cerrada: los tests de POST/PUT/PATCH de
+        // mas abajo verifican que sigue recibiendo 403.
+        when(getVehicleUseCase.execute()).thenReturn(List.of());
+
         mockMvc.perform(get("/v1/vehicles")
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERARIO")))
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
-        verify(getVehicleUseCase, never()).execute();
+                .andExpect(status().isOk());
+
+        verify(getVehicleUseCase).execute();
     }
 
     @Test

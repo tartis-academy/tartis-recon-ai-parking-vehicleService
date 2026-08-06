@@ -52,8 +52,11 @@ public class VehicleRestAdapter {
         this.mapper = mapper;
     }
 
+    // OPERARIO entra en modo consulta: el panel de administracion le muestra el
+    // listado, pero ninguna de las operaciones de escritura de abajo (POST, PUT,
+    // PATCH) lo admite, asi que sigue sin poder modificar un vehiculo.
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO')")
     public ResponseEntity<Iterable<VehicleResponse>> getAllVehicles() {
         Iterable<VehicleDTO> vehicles = getVehicleUseCase.execute();
         return ResponseEntity.ok(mapper.toResponseList(vehicles));
