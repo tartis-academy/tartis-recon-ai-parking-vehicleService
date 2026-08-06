@@ -26,7 +26,7 @@ El núcleo del dominio gestiona la entidad `Vehicle` con los siguientes atributo
 | `brand` | `String` | Marca del vehículo (ej: SEAT, Toyota) | No |
 | `model` | `String` | Modelo del vehículo (ej: Ibiza, Corolla) | No |
 | `color` | `String` | Color de la carrocería | No |
-| `type` | `VehicleType` | Categoría del vehículo (`CAR`, `MOTORBIKE`) | Sí |
+| `type` | `VehicleType` | Categoría del vehículo (`CAR`, `CAR_PMR`, `MOTORBIKE`) | Sí |
 
 ### Reglas de Validación de Dominio (`Vehicle.validPlate`)
 La entidad valida internamente la sintaxis de la matrícula según los patrones oficiales de la DGT española:
@@ -77,7 +77,6 @@ CREATE TABLE vehicle.vehicles (
 
 Para evitar ambigüedades con la versión actual (`v1.0.0`), las siguientes funcionalidades **NO formaban parte del alcance de la Fase 1 (`v0.5.0`)**:
 
-- ❌ **No incluía categoría `CAR_PMR`:** En Fase 1 solo se admitían los tipos `CAR` y `MOTORBIKE`.
 - ❌ **No incluía baja/alta lógica (RN-11):** En Fase 1 los vehículos no disponían del campo `active` ni los endpoints `PATCH /v1/vehicles/{id}/status` o `PATCH /v1/vehicles/{id}/activate`.
 - ❌ **No incluía autenticación Keycloak ni RBAC:** Los endpoints se ejecutaban sin validación de Bearer Tokens JWT ni roles (`ADMIN`/`OPERARIO`).
 - ❌ **No incluía enrutamiento Kong API Gateway:** Las peticiones se realizaban directamente contra el puerto `8081`.
