@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Integración con Keycloak & Spring Security:** Configuración de OAuth2 Resource Server para validar Bearer Access Tokens emitidos por Keycloak y mapeo de autoridades con `KeycloakRoleConverter`.
 - **Enrutamiento por API Gateway (Kong):** Soporte para enrutamiento centralizado y validación de tokens JWT en el perímetro a través de Kong API Gateway.
-- **Categoría de Vehículo PMR:** Añadido soporte para vehículos de movilidad reducida (`CAR_PMR`) en la entidad de dominio y controlador REST.
 - **Gestión de Baja Lógica (RN-11):** Implementado endpoint `PATCH /v1/vehicles/{id}/status` y `PATCH /v1/vehicles/{id}/activate` para activar o desactivar vehículos sin borrado físico de la base de datos.
 - **Trazabilidad Distribuida & Logging (GW-06):** Inclusión de `CorrelationIdFilter`, `RequestIdentityFilter` y `RequestLoggingFilter` inyectando `correlationId`, `userName` y `clientId` en el MDC de SLF4J para trazabilidad de peticiones de extremo a extremo.
 - **Control de Concurrencia Optimista:** Migración de esquema Flyway `V2__add_version.sql` añadiendo la columna `version` a la tabla `vehicles` para evitar pérdidas de actualización por concurrencia.
@@ -35,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **MVP Inicial de `vehicle-service`:** Implementación inicial de la arquitectura hexagonal para el catálogo de vehículos.
+- **Soporte para Categoría PMR (`CAR_PMR`):** Clasificación inicial para vehículos de movilidad reducida en el enum `VehicleType` y controladores REST.
 - **Dominio de Vehículos:** Entidad `Vehicle` con validación interna de dominio (matrícula, marca, modelo, color, número de puertas/sidecar).
 - **Endpoints REST Síncronos:**
   - `POST /v1/vehicles`: Alta de vehículos comprobando unicidad de matrícula.
