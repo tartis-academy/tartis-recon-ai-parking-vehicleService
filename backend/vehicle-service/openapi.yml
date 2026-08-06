@@ -260,7 +260,7 @@ components:
 
     VehicleRequest:
       type: object
-      required: [type, plate]
+      required: [type, plate, brand, model, color, numDoors]
       properties:
         type:
           $ref: '#/components/schemas/VehicleType'
@@ -280,12 +280,11 @@ components:
           example: "Rojo"
         numDoors:
           type: integer
-          minimum: 0
-          maximum: 7
           nullable: true
           description: >
-            Not applicable to MOTORBIKE: must be null or absent for that type.
-            Domain validation, returns 400 if violated.
+            Number of doors. Domain rules: for CAR and CAR_PMR only 2, 4 or 5
+            are accepted; for MOTORBIKE it must be null or absent. Domain
+            validation, returns 400 if violated.
           example: 5
         hasSidecar:
           type: boolean
@@ -326,13 +325,13 @@ components:
     Plate:
       type: string
       description: >
-        Spanish plate, 4 digits + 3 letters. Uppercase, no separators.
-        NOTE: the strict format excludes vowels and Q/N, but the pattern is kept
-        permissive to accept the "1234ABC" example agreed in Endpoints.pdf.
-      pattern: '^[0-9]{4}[A-Z]{3}$'
+        Spanish modern plate, 4 digits + 3 consonants (vowels, Q, N and Ñ are
+        excluded). Uppercase, no separators. The domain also accepts the legacy
+        format (province prefix, e.g. "M-1234-BC").
+      pattern: '^[0-9]{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$|^(A|AB|AL|AV|B|BA|BI|BU|C|CA|CC|CE|CO|CR|CS|CU|GC|GI|GE|GR|GU|H|HU|J|L|LE|LO|LU|M|MA|ML|MU|NA|O|OR|P|PM|PO|S|SA|SE|SG|SO|SS|T|TE|TF|TO|V|VA|VI|Z|ZA)-[0-9]{4,6}-[BCDFGHJKLMNPRSTVWXYZ]{2}$'
       minLength: 7
-      maxLength: 7
-      example: "1234ABC"
+      maxLength: 12
+      example: "1234BCD"
 
     ErrorResponse:
       type: object
@@ -348,7 +347,7 @@ components:
           example: "CONFLICT"
         message:
           type: string
-          example: "A vehicle with plate 1234ABC already exists"
+          example: "A vehicle with plate 1234BCD already exists"
         path:
           type: string
           example: "/v1/vehicles"
