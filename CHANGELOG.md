@@ -34,8 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **MVP Inicial de `vehicle-service`:** Implementación inicial de la arquitectura hexagonal para el catálogo de vehículos.
-- **Dominio de Vehículos:** Entidad `Vehicle` con validación interna de dominio (matrícula, marca, modelo, color, tipo `CAR`, `CAR_PMR`, `MOTORBIKE`).
-- **Soporte para Categoría PMR:** Inclusión de vehículos para personas de movilidad reducida (`CAR_PMR`) en el enum `VehicleType`.
+- **Soporte para Categoría PMR (`CAR_PMR`):** Clasificación inicial para vehículos de movilidad reducida en el enum `VehicleType` y controladores REST.
+- **Dominio de Vehículos:** Entidad `Vehicle` con validación interna de dominio (matrícula, marca, modelo, color, número de puertas/sidecar).
 - **Endpoints REST Síncronos:**
   - `POST /v1/vehicles`: Alta de vehículos comprobando unicidad de matrícula.
   - `GET /v1/vehicles`: Consulta de catálogo paginado.
