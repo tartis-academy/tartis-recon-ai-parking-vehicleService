@@ -260,7 +260,7 @@ components:
 
     VehicleRequest:
       type: object
-      required: [type, plate, brand, model, color, numDoors]
+      required: [type, plate]
       properties:
         type:
           $ref: '#/components/schemas/VehicleType'
