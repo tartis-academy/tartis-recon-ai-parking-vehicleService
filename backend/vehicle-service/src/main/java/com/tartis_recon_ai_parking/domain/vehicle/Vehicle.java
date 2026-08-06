@@ -108,8 +108,8 @@ public class Vehicle{
         // Las letras validas son consonantes excluyendo Ñ y Q
         String modernPattern = "^\\d{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$";
 
-        // Formato antiguo (1971-2000): 1-2 letras de provincia, guion, 4-6 digitos, guion, 2 letras
-        String oldPattern = "^[A-Z]{1,2}-\\d{4,6}-[A-Z]{2}$";
+        // Formato antiguo (1971-2000): codigo de provincia real, guion, 4-6 digitos, guion, 2 consonantes
+        String oldPattern = "^(A[BLV]?|B[AIU]?|C[ACEORSU]?|G[CEIRU]|HU?|J|L[EOU]?|M[ALU]?|NA|OR?|P[MO]?|S[AEGOS]?|T[EFO]?|V[AI]?|ZA?)-\\d{4,6}-[BCDFGHJKLMNPRSTVWXYZ]{2}$";
 
         //Lanza excepción si no cumple ninguno de los dos formatos.
         if (!plate.matches(modernPattern) && !plate.matches(oldPattern)) 
