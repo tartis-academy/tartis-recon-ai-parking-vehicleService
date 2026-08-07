@@ -2,13 +2,10 @@ openapi: 3.0.3
 info:
   title: vehicle-service API
   description: >
-    Manages the vehicle catalogue. Source of truth for the contract-first
-    workflow: DTOs, controllers and enums are derived from this file, never the
-    other way around.
-
-    Consumed by stay-service during check-in (via StayVehiclePort) to resolve a
-    plate and to enforce RN-11 (a deactivated vehicle cannot enter).
-  version: 1.0.0
+    Manages the vehicle catalogue. Consumed by stay-service during check-in
+    (via StayVehiclePort) to resolve a plate and to enforce RN-11 (a
+    deactivated vehicle cannot enter).
+  version: 1.1.0
   contact:
     name: TARTIS Recon-AI - Team Parking
 
@@ -32,47 +29,20 @@ paths:
     get:
       tags: [vehicles]
       operationId: listVehicles
-      summary: Lists registered vehicles
-      parameters:
-        - name: active
-          in: query
-          required: false
-          description: Filters by activation state. Omitted = all vehicles.
-          schema:
-            type: boolean
-        - name: type
-          in: query
-          required: false
-          schema:
-            $ref: '#/components/schemas/VehicleType'
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-            minimum: 0
-        - name: size
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 20
-            minimum: 1
-            maximum: 100
+      summary: Lists all registered vehicles
       responses:
         '200':
-          description: Page of vehicles
+          description: List of vehicles
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VehiclePage'
+                type: array
+                items:
+                  $ref: '#/components/schemas/VehicleResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -140,9 +110,8 @@ paths:
       operationId: updateVehicle
       summary: Updates an existing vehicle
       description: >
-        Full update of the editable data (brand, model, colour, numDoors, type).
-        The plate is immutable: to correct a plate, deactivate and register a new
-        vehicle. The activation state is NOT changed here, use
+        Full update of the editable data (plate, type, brand, model, colour,
+        numDoors, hasSidecar). The activation state is NOT changed here, use
         PATCH /vehicles/{id}/status.
       parameters:
         - $ref: '#/components/parameters/VehicleIdPath'
@@ -151,7 +120,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VehicleUpdateRequest'
+              $ref: '#/components/schemas/VehicleRequest'
       responses:
         '200':
           description: Vehicle updated
@@ -291,12 +260,12 @@ components:
 
     VehicleRequest:
       type: object
-      required: [plate, type]
+      required: [type, plate]
       properties:
-        plate:
-          $ref: '#/components/schemas/Plate'
         type:
           $ref: '#/components/schemas/VehicleType'
+        plate:
+          $ref: '#/components/schemas/Plate'
         brand:
           type: string
           maxLength: 50
@@ -311,39 +280,15 @@ components:
           example: "Rojo"
         numDoors:
           type: integer
-          minimum: 0
-          maximum: 7
           nullable: true
           description: >
-            Not applicable to MOTORBIKE: must be null or absent for that type.
-            Domain validation, returns 400 if violated.
+            Number of doors. Domain rules: for CAR and CAR_PMR only 2, 4 or 5
+            are accepted; for MOTORBIKE it must be null or absent. Domain
+            validation, returns 400 if violated.
           example: 5
-        active:
+        hasSidecar:
           type: boolean
-          default: true
-          description: Defaults to true when omitted.
-
-    VehicleUpdateRequest:
-      type: object
-      required: [type]
-      description: The plate is immutable and therefore not accepted here.
-      properties:
-        type:
-          $ref: '#/components/schemas/VehicleType'
-        brand:
-          type: string
-          maxLength: 50
-        model:
-          type: string
-          maxLength: 50
-        color:
-          type: string
-          maxLength: 30
-        numDoors:
-          type: integer
-          minimum: 0
-          maximum: 7
-          nullable: true
+          description: Whether the vehicle has a sidecar (tricycle).
 
     VehicleStatusRequest:
       type: object
@@ -356,13 +301,13 @@ components:
     VehicleResponse:
       type: object
       properties:
-        id:
+        uniqueId:
           type: string
           format: uuid
-        plate:
-          $ref: '#/components/schemas/Plate'
         type:
           $ref: '#/components/schemas/VehicleType'
+        plate:
+          $ref: '#/components/schemas/Plate'
         brand:
           type: string
         model:
@@ -372,42 +317,21 @@ components:
         numDoors:
           type: integer
           nullable: true
+        hasSidecar:
+          type: boolean
         active:
           type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    VehiclePage:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/VehicleResponse'
-        page:
-          type: integer
-        size:
-          type: integer
-        totalElements:
-          type: integer
-          format: int64
-        totalPages:
-          type: integer
 
     Plate:
       type: string
       description: >
-        Spanish plate, 4 digits + 3 letters. Uppercase, no separators.
-        NOTE: the strict format excludes vowels and Q/N, but the pattern is kept
-        permissive to accept the "1234ABC" example agreed in Endpoints.pdf.
-      pattern: '^[0-9]{4}[A-Z]{3}$'
+        Spanish modern plate, 4 digits + 3 consonants (vowels, Q, N and Ñ are
+        excluded). Uppercase, no separators. The domain also accepts the legacy
+        format (province prefix, e.g. "M-1234-BC").
+      pattern: '^[0-9]{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$|^(A|AB|AL|AV|B|BA|BI|BU|C|CA|CC|CE|CO|CR|CS|CU|GC|GI|GE|GR|GU|H|HU|J|L|LE|LO|LU|M|MA|ML|MU|NA|O|OR|P|PM|PO|S|SA|SE|SG|SO|SS|T|TE|TF|TO|V|VA|VI|Z|ZA)-[0-9]{4,6}-[BCDFGHJKLMNPRSTVWXYZ]{2}$'
       minLength: 7
-      maxLength: 7
-      example: "1234ABC"
+      maxLength: 12
+      example: "1234BCD"
 
     ErrorResponse:
       type: object
@@ -423,7 +347,7 @@ components:
           example: "CONFLICT"
         message:
           type: string
-          example: "A vehicle with plate 1234ABC already exists"
+          example: "A vehicle with plate 1234BCD already exists"
         path:
           type: string
           example: "/v1/vehicles"
